@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block styles %}
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+
+        <div class="row d-flex justify-content-center">
+
+            <div class="col-md-7">
+                {# users can only access their profiles #}
+                {% if request.user == profile.account %}
+
+                    <div class="card p-3 py-4">
+
+                        <div class="text-center">
+                            <img src="{{ profile.get_profile_image }}" width="100" class="rounded-circle" alt="">
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <a href="{% url 'update-profile' account_id %}"
+                               class="bg-secondary h-100 p-1 px-4 rounded text-white text-decoration-none">
+                                Edit Profile
+                            </a>
+                            <h5 class="mt-2 mb-0 text-success">{{ profile.first_name }} {{ profile.last_name }}</h5>
+                            <span>{{ profile.account.account_number }}</span>
+                            <br>
+                            <div class="px-4 mt-1">
+                                <p class="h3 text-dark">
+                                    Contact: {{ profile.phone_number }}<br>
+                                    Email: {{ profile.account.email }}<br>
+                                    City: {{ profile.city }}<br>
+                                    Zip Code: {{ profile.zip_code }}
+                                </p>
+
+                            </div>
+
+                            <ul class="social-list">
+                                <li><i class="fab fa-facebook"></i></li>
+                                <li><i class="fab fa-dribbble"></i></li>
+                                <li><i class="fab fa-instagram"></i></li>
+                                <li><i class="fab fa-linkedin"></i></li>
+                                <li><i class="fab fa-google"></i></li>
+                            </ul>
+
+                            <div class="buttons">
+
+                                <button class="btn btn-outline-primary px-4">Message</button>
+                                <button class="btn btn-primary px-4 ms-3">Contact</button>
+                            </div>
+
+
+                        </div>
+
+
+                    </div>
+                {% else %}
+                    <div class="card p-3 py-4" id="denied">
+                        <div class="card-body">
+                            <p class="text-danger text-center display-4">
+                                Permission Denied
+                            <hr class="text-success">
+                            Profiles are private!
+                            </p>
+                        </div>
+                    </div>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        const denied = document.querySelector('#denied');
+        if (denied) {
+            // redirect to profile page after 3 seconds
+            setTimeout(() => {
+                window.location.href = '{% url 'profile' request.user.profile.id %}';
+            }, 3000);
+        }
+    </script>
+{% endblock %}

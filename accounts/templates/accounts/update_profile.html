@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+
+{% block content %}
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card m-3 p-3 bg-gradient-light">
+
+                    <div class="card-body ">
+                        {% if request.user == account %}
+                            <form method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                {% crispy form %}
+                            </form>
+                        {% else %}
+                            <h1 class="text-danger">Not your account!</h1><br>
+                            <hr class="text-danger">
+                            <p class="text-danger">You can't update another person's profile</p>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% load sweetify %}
+    {% sweetify %}
+{% endblock %}

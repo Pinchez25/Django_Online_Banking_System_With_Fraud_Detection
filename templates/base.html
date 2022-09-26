@@ -1,0 +1,49 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        {% block title %}
+            Online Bank
+        {% endblock %}
+    </title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="shortcut icon" type="image/png" href="{% static 'favicon.ico' %}">
+    <link rel="stylesheet" href="{% static 'css/sb-admin-2.min.css' %}">
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <style>
+        input {
+            font-family: Roboto, sans-serif !important;
+        }
+        label{
+            color: black;
+        }
+    </style>
+    {% block styles %}
+
+    {% endblock %}
+
+</head>
+<body id="page-top">
+<div class="row mt-3 justify-content-center">
+    <div class="col-md-8">
+        {% include 'messages.html' %}
+    </div>
+</div>
+{% block content %}
+
+{% endblock %}
+{% load sweetify %}
+{% sweetify %}
+<script src="{% static 'js/jquery.easing.min.js' %}"></script>
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'js/all.min.js' %}"></script>
+<script src="{% static 'js/sb-admin-2.min.js' %}"></script>
+{% block scripts %}
+
+{% endblock %}
+</body>
+</html>
