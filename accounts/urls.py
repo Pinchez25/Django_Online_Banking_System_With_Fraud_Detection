@@ -2,12 +2,14 @@ from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, 
     PasswordResetConfirmView, PasswordResetCompleteView
 from django.urls import path
 
-from .views import user_login, logout_user, UserRegistrationView, UpdateProfile, ProfileView
+from .views import user_login, logout_user, UserRegistrationView, UpdateProfile, ProfileView, \
+    CreateOnlineBankAccountView
 
 urlpatterns = [
     path('login/', user_login, name='login'),
     path('logout/', logout_user, name='logout'),
     path('register/', UserRegistrationView.as_view(), name='register'),
+    path('create-online-account/', CreateOnlineBankAccountView.as_view(), name="create-online-account"),
 
     # password change views
     path('reset_password/', PasswordResetView.as_view(template_name="accounts/forgot-password.html"),

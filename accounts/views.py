@@ -1,4 +1,3 @@
-import sweetify as sw
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -7,34 +6,51 @@ from django.urls import reverse_lazy
 from django.views.generic import FormView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import UpdateView
-from sweetify.views import SweetifySuccessMixin
 
-from .forms import AccountCreationForm, LoginForm, ProfileCreationForm
+from .forms import AccountCreationForm, LoginForm, ProfileCreationForm, OnlineBankAccountCreationForm
 from .models import Profile
 
 
+class CreateOnlineBankAccountView(FormView):
+    template_name = 'accounts/create_online_bank_account.html'
+    form_class = OnlineBankAccountCreationForm
+    success_url = reverse_lazy('dashboard')
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, 'Account created successfully')
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        # messages.error(self.request, 'Account creation failed')
+        return super().form_invalid(form)
+
+
 class UserRegistrationView(FormView):
-    template_name = 'accounts/register.html'
+    template_name = 'accounts/bank_account_creation.html'
     form_class = AccountCreationForm
     redirect_authenticated_user = True
-    success_url = reverse_lazy('dashboard')
 
     def form_valid(self, form):
         user = form.save()
         if user is not None:
             login(self.request, user)
-            sw.success(self.request, 'Account created successfully', timer=3000, timerProgressBar=True)
-            # messages.success(self.request, 'Account created successfully')
+            messages.success(self.request, 'Account created successfully')
         return super(UserRegistrationView, self).form_valid(form)
 
     def form_invalid(self, form):
         # if there are errors in the form, render the form with errors
         return render(self.request, self.template_name, {'register_form': form})
 
+    def get_success_url(self):
+        return reverse_lazy('update-profile', kwargs={'pk': self.request.user.pk})
+
+    """ # this function redirects user to the dashboard page if they are already logged in
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated:
             return redirect('dashboard')
         return super(UserRegistrationView, self).get(*args, **kwargs)
+    """
 
 
 def user_login(request):
@@ -43,15 +59,20 @@ def user_login(request):
         if form.is_valid():
             email = form.cleaned_data.get('email')
             password = form.cleaned_data.get('password')
-            username = get_user_model().objects.get(email=email).username
-            user = authenticate(request, username=username, password=password)
-            if user is not None:
-                login(request, user)
-                messages.success(request, 'Login successfully')
-                return redirect(request.GET.get('next') if 'next' in request.GET else 'dashboard')
-            else:
-                messages.error(request, 'Invalid email or password')
+            try:
+                username = get_user_model().objects.get(email=email).username
+                user = authenticate(request, username=username, password=password)
+                if user is not None:
+                    login(request, user)
+                    messages.success(request, 'Login success')
+                    return redirect(request.GET.get('next') if 'next' in request.GET else 'dashboard')
+                else:
+                    messages.error(request, 'Invalid email or password')
+                    return redirect('login')
+            except get_user_model().DoesNotExist:
+                messages.error(request, "Invalid user and/or password")
                 return redirect('login')
+
     else:
         form = LoginForm()
     return render(request, 'accounts/login.html', {'form': form})
@@ -74,10 +95,9 @@ class ProfileView(LoginRequiredMixin, DetailView):
         return context
 
 
-class UpdateProfile(LoginRequiredMixin, SweetifySuccessMixin, UpdateView):
+class UpdateProfile(LoginRequiredMixin, UpdateView):
     model = Profile
     form_class = ProfileCreationForm
-    success_message = 'Profile updated successfully'
     template_name = 'accounts/update_profile.html'
 
     def get_success_url(self):

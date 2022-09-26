@@ -1,10 +1,58 @@
+from captcha.fields import ReCaptchaField
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
+from django.core.exceptions import ValidationError
 from django.forms import Select, EmailField, CharField, EmailInput, PasswordInput, ModelForm, Form
 
-from .models import Profile
+from .models import Profile, Customer
+
+
+class OnlineBankAccountCreationForm(ModelForm):
+    password = CharField(widget=PasswordInput())
+    confirm_password = CharField(widget=PasswordInput())
+    captcha = ReCaptchaField()
+
+    class Meta:
+        model = Customer
+        fields = ['account_number', 'password', 'confirm_password']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.layout = Layout(
+            'account_number',
+            Row(
+                Column('password', css_class='col-md-6 mb-0'),
+                Column('confirm_password', css_class='col-md-6 mb-0'),
+
+            ),
+            'captcha',
+            Submit('submit', 'Submit', css_class='btn btn-primary  btn-block', id="btnSubmit")
+        )
+
+    """
+        # make sure the account_number exists from Account model before saving
+    def save(self, *args, **kwargs):
+        if not Account.objects.filter(account_number=self.account_number).exists():
+            raise ValidationError("Account number does not exist")
+        super(Customer, self).save(*args, **kwargs)
+    """
+
+    # ensure password and confirm_password are the same
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get('password')
+        account_number = cleaned_data.get('account_number')
+        confirm_password = cleaned_data.get('confirm_password')
+        if password != confirm_password:
+            raise ValidationError("Passwords do not match")
+
+        # make sure account_number exists in Account model
+        if not get_user_model().objects.filter(account_number=account_number).exists():
+            raise ValidationError(
+                "Account number does not exist.You have to be a customer of this bank to create an online bank account")
 
 
 class AccountCreationForm(UserCreationForm):
@@ -74,10 +122,9 @@ class ProfileCreationForm(ModelForm):
         )
 
         self.fields['first_name'].widget.attrs.update({'id': 'first-name'})
-        self.fields['last_name'].widget.attrs.update({'id':'last-name'})
-        self.fields['profile_image'].widget.attrs.update({'id':'profile-image'})
+        self.fields['last_name'].widget.attrs.update({'id': 'last-name'})
+        self.fields['profile_image'].widget.attrs.update({'id': 'profile-image'})
         self.fields['phone_number'].widget.attrs.update({'id': 'phone-number'})
         self.fields['address'].widget.attrs.update({'id': 'address'})
         self.fields['city'].widget.attrs.update({'id': 'city'})
         self.fields['zip_code'].widget.attrs.update({'id': 'zip-code'})
-

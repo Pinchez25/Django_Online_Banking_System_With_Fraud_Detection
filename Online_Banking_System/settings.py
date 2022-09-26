@@ -33,10 +33,12 @@ INSTALLED_APPS = [
     'django_browser_reload',
     'crispy_forms',
     'crispy_bootstrap5',
-    'sweetify',
+    'captcha',
     'baton.autodiscover',
 ]
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+RECAPTCHA_PUBLIC_KEY = '6LdLkzAiAAAAAH-w4R6x_NK0vfdUxY5dzbKiuLol'
+RECAPTCHA_PRIVATE_KEY = '6LdLkzAiAAAAAA1FaTHbdJMxS3zTJ05JRzcycnQg'
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 CRISPY_FAIL_SILENTLY = not DEBUG

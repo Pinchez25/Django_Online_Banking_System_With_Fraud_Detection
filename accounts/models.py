@@ -1,9 +1,11 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from creditcards.models import CardNumberField
 from django.utils.translation import gettext_lazy as _
 # import password validator
 from django.contrib.auth.password_validation import validate_password
+from django.core.validators import MaxValueValidator
 
 USER_TYPES = (
     ('individual', 'Individual'),
@@ -35,7 +37,8 @@ class Account(AbstractUser):
     account_number = models.CharField(_("Account Number"), max_length=50, null=True, blank=True)
     user_type = models.CharField(_("User Type"), max_length=50, choices=USER_TYPES, null=True, blank=True)
     email = models.EmailField(_("Email"), unique=True)
-    national_id = models.IntegerField(_('National ID'), null=True, blank=True)
+    national_id = models.IntegerField(_('National ID'), unique=True, default=0,
+                                      validators=[MaxValueValidator(99999999, message="Invalid National ID")])
     bank_balances = models.DecimalField(_('Balance'), max_digits=12, decimal_places=2, default=0.00)
 
     # account number and national_id should be unique together
@@ -108,3 +111,5 @@ class Customer(models.Model):
         verbose_name_plural = _('Customers')
         db_table = 'customer'
         ordering = ['-created']
+
+

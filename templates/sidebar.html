@@ -14,9 +14,16 @@
     <!-- Nav Item - Dashboard -->
     <li class="nav-item active">
         <a class="nav-link" href="{% url 'dashboard' %}">
-            <i class="fas fa-fw fa-tachometer-alt"></i>
+            <i class="fas fa-fw fa-tachometer-alt " aria-hidden="true"></i>
             <span>Dashboard</span></a>
     </li>
+    <hr class="sidebar-divider">
+    <li class="nav-item active">
+        <a class="nav-link" href="{% url 'register' %}">
+            <i class="fas fa-user-plus"></i>
+            <span>Add Customer</span></a>
+    </li>
+
     {% comment %}
     <!-- Divider -->
     <hr class="sidebar-divider">
@@ -80,7 +87,7 @@
             <div class="bg-white py-2 collapse-inner rounded">
                 <h6 class="collapse-header">Login Screens:</h6>
                 <a class="collapse-item" href="login.html">Login</a>
-                <a class="collapse-item" href="register.html">Register</a>
+                <a class="collapse-item" href="bank_account_creation.html">Register</a>
                 <a class="collapse-item" href="forgot-password.html">Forgot Password</a>
                 <div class="collapse-divider"></div>
                 <h6 class="collapse-header">Other Pages:</h6>
