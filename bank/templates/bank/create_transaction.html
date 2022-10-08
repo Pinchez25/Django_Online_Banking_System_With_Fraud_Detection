@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load crispy_forms_filters %}
+
+{% block content %}
+    <div class="container">
+
+        <div class="card o-hidden border-0 shadow-lg my-5">
+            <div class="card-body p-0 bg-white">
+                <!-- Nested Row within Card Body -->
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="p-5">
+                            <div class="text-center">
+                                <h1 class="h4 text-dark mb-4">
+                                    {% if request.path == '/send/' %}
+                                        Send Money
+                                    {% elif request.path == '/deposit/' %}
+                                        Deposit Money
+                                    {% elif request.path == '/withdraw/' %}
+                                        Withdraw Money
+                                    {% endif %}
+                                </h1>
+                                {#                                {{ request.user.is_superuser }}#}
+                            </div>
+                            <form method="post" autocomplete="off">
+                                {% csrf_token %}
+                                {{ form|crispy }}
+                                <input type="submit" value="Confirm Transaction" class="btn btn-primary btn-block">
+                            </form>
+                            {#                            <hr>#}
+                            {#                            <div class="text-center">#}
+                            {#                                <a class="small" href="{% url 'reset_password' %}">Forgot Password?</a>#}
+                            {#                            </div>#}
+                            {#                            <div class="text-center">#}
+                            {#                                <a class="small" href="{% url 'login' %}">Already have an account? Login!</a>#}
+                            {#                            </div>#}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+{% endblock %}

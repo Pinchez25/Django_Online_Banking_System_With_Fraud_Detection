@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap5',
     'captcha',
+    'django_user_agents',
     'baton.autodiscover',
 ]
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
@@ -43,7 +44,14 @@ RECAPTCHA_PRIVATE_KEY = '6LdLkzAiAAAAAA1FaTHbdJMxS3zTJ05JRzcycnQg'
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 CRISPY_FAIL_SILENTLY = not DEBUG
 
-SWEETIFY_SWEETALERT_LIBRARY = 'sweetalert2'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379',
+    }
+}
+USER_AGENTS_CACHE = 'default'
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -54,6 +62,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_browser_reload.middleware.BrowserReloadMiddleware",
+    'django_user_agents.middleware.UserAgentMiddleware',
 ]
 
 ROOT_URLCONF = "Online_Banking_System.urls"

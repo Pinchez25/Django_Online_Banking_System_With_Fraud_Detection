@@ -1,5 +1,7 @@
 asgiref==3.5.2
+async-timeout==4.0.2
 crispy-bootstrap5==0.6
+Deprecated==1.2.13
 Django==4.1.1
 django-baton==2.4.1
 django-browser-reload==1.6.0
@@ -7,6 +9,13 @@ django-credit-cards==0.4.1
 django-crispy-forms==1.14.0
 django-js-asset==2.0.0
 django-recaptcha==3.0.0
+django-user-agents==0.4.0
+packaging==21.3
 Pillow==9.2.0
+pyparsing==3.0.9
+redis==4.3.4
 sqlparse==0.4.2
 tzdata==2022.2
+ua-parser==0.16.1
+user-agents==2.2.0
+wrapt==1.14.1

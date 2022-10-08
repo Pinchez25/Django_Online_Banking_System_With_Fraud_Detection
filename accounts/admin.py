@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Account, Profile, Customer
+from .models import Account, Profile
 from .forms import AccountCreationForm
 
 
@@ -7,7 +7,7 @@ from .forms import AccountCreationForm
 class UserAdmin(admin.ModelAdmin):
     form = AccountCreationForm
     list_display = ['username', 'account_type', 'user_type', 'email',
-                    'national_id', 'account_number']
+                    'national_id', 'cc_number','bank_balances']
     list_filter = ['account_type', 'user_type']
     search_fields = ['username', 'email', 'national_id']
     list_per_page = 25
@@ -21,6 +21,6 @@ class ProfileAdmin(admin.ModelAdmin):
     list_per_page = 25
 
 
-@admin.register(Customer)
-class CustomerAdmin(admin.ModelAdmin):
-    list_per_page = 25
+# @admin.register(Customer)
+# class CustomerAdmin(admin.ModelAdmin):
+#     pass

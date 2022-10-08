@@ -7,23 +7,40 @@ from django.views.generic import FormView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import UpdateView
 
-from .forms import AccountCreationForm, LoginForm, ProfileCreationForm, OnlineBankAccountCreationForm
+from .forms import AccountCreationForm, LoginForm, ProfileCreationForm
 from .models import Profile
+from .utils import login_agent
 
 
-class CreateOnlineBankAccountView(FormView):
-    template_name = 'accounts/create_online_bank_account.html'
-    form_class = OnlineBankAccountCreationForm
-    success_url = reverse_lazy('dashboard')
-
-    def form_valid(self, form):
-        form.save()
-        messages.success(self.request, 'Account created successfully')
-        return super().form_valid(form)
-
-    def form_invalid(self, form):
-        # messages.error(self.request, 'Account creation failed')
-        return super().form_invalid(form)
+# class CreateOnlineBankAccountView2(CreateView):
+#     template_name = 'accounts/create_online_bank_account.html'
+#     form_class = OnlineBankAccountCreationForm
+#     success_url = reverse_lazy('dashboard')
+#
+#     def form_valid(self, form):
+#         form.instance.account = Account.objects.get(account_number=form.cleaned_data['account_number'])
+#         form.save()
+#         messages.success(self.request, 'Online bank account created successfully')
+#         return super(CreateOnlineBankAccountView2, self).form_valid(form)
+#
+#     def form_invalid(self, form):
+#         messages.error(self.request, 'Error creating online bank account')
+#         return super(CreateOnlineBankAccountView2, self).form_invalid(form)
+#
+#
+# class CreateOnlineBankAccountView(FormView):
+#     template_name = 'accounts/create_online_bank_account.html'
+#     form_class = OnlineBankAccountCreationForm
+#     success_url = reverse_lazy('dashboard')
+#
+#     def form_valid(self, form):
+#         form.save()
+#         messages.success(self.request, 'Account created successfully')
+#         return super().form_valid(form)
+#
+#     def form_invalid(self, form):
+#         # messages.error(self.request, 'Account creation failed')
+#         return super().form_invalid(form)
 
 
 class UserRegistrationView(FormView):
@@ -45,15 +62,17 @@ class UserRegistrationView(FormView):
     def get_success_url(self):
         return reverse_lazy('update-profile', kwargs={'pk': self.request.user.pk})
 
-    """ # this function redirects user to the dashboard page if they are already logged in
     def get(self, *args, **kwargs):
         if self.request.user.is_authenticated:
             return redirect('dashboard')
         return super(UserRegistrationView, self).get(*args, **kwargs)
-    """
 
 
 def user_login(request):
+    # if user is already logged in, redirect to dashboard
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+
     if request.method == 'POST':
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -64,6 +83,7 @@ def user_login(request):
                 user = authenticate(request, username=username, password=password)
                 if user is not None:
                     login(request, user)
+                    login_agent.get_login_agent(request)
                     messages.success(request, 'Login success')
                     return redirect(request.GET.get('next') if 'next' in request.GET else 'dashboard')
                 else:
@@ -107,6 +127,7 @@ class UpdateProfile(LoginRequiredMixin, UpdateView):
         profile_ = form.save(commit=False)
         profile_.account = self.request.user
         profile_.save()
+        messages.success(self.request, 'Profile updated successfully')
         return super(UpdateProfile, self).form_valid(form)
 
     def get_context_data(self, **kwargs):

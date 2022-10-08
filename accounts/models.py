@@ -1,11 +1,9 @@
-from django.core.exceptions import ValidationError
-from django.db import models
-from django.contrib.auth.models import AbstractUser
 from creditcards.models import CardNumberField
-from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.models import AbstractUser
 # import password validator
-from django.contrib.auth.password_validation import validate_password
 from django.core.validators import MaxValueValidator
+from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 USER_TYPES = (
     ('individual', 'Individual'),
@@ -20,21 +18,11 @@ ACCOUNT_TYPES = (
     ('money market', 'Money Market'),
 )
 
-# class AccountType(models.Model):
-#     type = models.CharField(_("Type of Account"), max_length=50, choices=ACCOUNT_TYPES)
-#
-#     def __str__(self):
-#         return self.type
-
-
-"""
-    Account model for a bank account created by a bank official
-"""
-
 
 class Account(AbstractUser):
     account_type = models.CharField(_("Type of Account"), max_length=50, choices=ACCOUNT_TYPES)
-    account_number = models.CharField(_("Account Number"), max_length=50, null=True, blank=True)
+    # account_number = models.CharField(_("Account Number"), max_length=50, null=True, blank=True)
+    cc_number = CardNumberField(_('Credit Card'), help_text=_('Customer credit card number'), null=True, blank=True)
     user_type = models.CharField(_("User Type"), max_length=50, choices=USER_TYPES, null=True, blank=True)
     email = models.EmailField(_("Email"), unique=True)
     national_id = models.IntegerField(_('National ID'), unique=True, default=0,
@@ -43,7 +31,7 @@ class Account(AbstractUser):
 
     # account number and national_id should be unique together
     class Meta:
-        unique_together = ('account_number', 'national_id')
+        unique_together = ('cc_number', 'national_id')
         db_table = 'auth_user'
         # app_label = 'auth'
 
@@ -78,38 +66,18 @@ class Profile(models.Model):
         ordering = ['-created']
 
 
-# class CustomerTypes(models.Model):
-#     type = models.CharField(_('Type of Customer'), max_length=50, choices=USER_TYPES, default='individual')
+# class Customer(models.Model):
+#     account_number = models.CharField(_("Account Number"), max_length=50)
+#     password = models.CharField(_("Password"), max_length=50, validators=[validate_password])
+#     cc_number = CardNumberField(_('Credit Card'), help_text=_('Customer credit card number'), null=True, blank=True)
+#     created = models.DateTimeField(auto_now_add=True)
+#     updated = models.DateTimeField(auto_now=True)
 #
 #     def __str__(self):
-#         return self.type
+#         return str(self.cc_number)
+#
 #     class Meta:
-#         db_table = 'customer_types'
-#         ordering = ['type']
-
-
-"""
-    Customer model for a bank account created by a customer
-    registering for an online banking account account. At the end of registration,
-    assign a credit card number which will be used for all transactions.
-    
-"""
-
-
-class Customer(models.Model):
-    account_number = models.CharField(_("Account Number"), max_length=50)
-    password = models.CharField(_("Password"), max_length=50, validators=[validate_password])
-    cc_number = CardNumberField(_('Credit Card'), help_text=_('Customer credit card number'), null=True, blank=True)
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return str(self.cc_number)
-
-    class Meta:
-        verbose_name = _('Customer')
-        verbose_name_plural = _('Customers')
-        db_table = 'customer'
-        ordering = ['-created']
-
-
+#         verbose_name = _('Customer')
+#         verbose_name_plural = _('Customers')
+#         db_table = 'customer'
+#         ordering = ['-created']
