@@ -90,9 +90,16 @@ class SendMoneyView(CreateTransactionMixin):
             account.save()
 
             recipient = Account.objects.get(username=username)
-            recipient.bank_balances += amount
-            recipient.save()
-            messages.success(self.request, f"Money sent successfully to {str(username).title()}")
+            if not account == recipient:
+                recipient.bank_balances += amount
+                recipient.save()
+                messages.success(self.request, f"Money sent successfully to {str(username).title()}")
+            else:
+                # TODO: For now re-adding the sent money is a Hacky fix - implement select_update() with atomic
+                #  transaction later
+                account.bank_balances += amount
+                account.save()
+                messages.warning(self.request, "You can`t send money to yourself")
 
         return super(SendMoneyView, self).form_valid(form)
 

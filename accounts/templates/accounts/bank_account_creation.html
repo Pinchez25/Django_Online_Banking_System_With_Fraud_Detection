@@ -5,7 +5,7 @@
     <div class="container">
 
         <div class="card o-hidden border-0 shadow-lg my-5">
-            <div class="card-body p-0 bg-gradient-light">
+            <div class="card-body p-0 bg-white">
                 <!-- Nested Row within Card Body -->
                 <div class="row justify-content-center">
                     <div class="col-md-8">
@@ -14,7 +14,7 @@
                                 <h1 class="h4 text-gray-900 mb-4">Create a Customer</h1>
 {#                                {{ request.user.is_superuser }}#}
                             </div>
-                            <form class="user" method="post" id="register-form">
+                            <form class="user" method="post" id="register-form" autocomplete="off">
                                 {% crispy register_form %}
                             </form>
                             <hr>

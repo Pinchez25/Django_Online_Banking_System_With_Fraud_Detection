@@ -4,6 +4,7 @@ crispy-bootstrap5==0.6
 Deprecated==1.2.13
 Django==4.1.1
 django-baton==2.4.1
+django-braces==1.15.0
 django-browser-reload==1.6.0
 django-credit-cards==0.4.1
 django-crispy-forms==1.14.0

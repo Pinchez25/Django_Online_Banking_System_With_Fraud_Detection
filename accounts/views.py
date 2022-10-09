@@ -10,6 +10,7 @@ from django.views.generic.edit import UpdateView
 from .forms import AccountCreationForm, LoginForm, ProfileCreationForm
 from .models import Profile
 from .utils import login_agent
+from braces.views import SuperuserRequiredMixin
 
 
 # class CreateOnlineBankAccountView2(CreateView):
@@ -43,7 +44,7 @@ from .utils import login_agent
 #         return super().form_invalid(form)
 
 
-class UserRegistrationView(FormView):
+class UserRegistrationView(SuperuserRequiredMixin, FormView):
     template_name = 'accounts/bank_account_creation.html'
     form_class = AccountCreationForm
     redirect_authenticated_user = True
@@ -62,10 +63,10 @@ class UserRegistrationView(FormView):
     def get_success_url(self):
         return reverse_lazy('update-profile', kwargs={'pk': self.request.user.pk})
 
-    def get(self, *args, **kwargs):
-        if self.request.user.is_authenticated:
-            return redirect('dashboard')
-        return super(UserRegistrationView, self).get(*args, **kwargs)
+    # def get(self, *args, **kwargs):
+    #     if self.request.user.is_authenticated:
+    #         return redirect('dashboard')
+    #     return super(UserRegistrationView, self).get(*args, **kwargs)
 
 
 def user_login(request):
