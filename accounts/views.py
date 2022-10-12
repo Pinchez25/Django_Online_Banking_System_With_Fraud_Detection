@@ -89,6 +89,7 @@ def user_login(request):
                     return redirect(request.GET.get('next') if 'next' in request.GET else 'dashboard')
                 else:
                     messages.error(request, 'Invalid email or password')
+
                     return redirect('login')
             except get_user_model().DoesNotExist:
                 messages.error(request, "Invalid user and/or password")
