@@ -8,7 +8,9 @@ django-braces==1.15.0
 django-browser-reload==1.6.0
 django-credit-cards==0.4.1
 django-crispy-forms==1.14.0
+django-defender==0.9.5
 django-js-asset==2.0.0
+django-preventconcurrentlogins==0.8.2
 django-recaptcha==3.0.0
 django-user-agents==0.4.0
 packaging==21.3

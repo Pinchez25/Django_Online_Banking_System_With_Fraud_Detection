@@ -10,7 +10,7 @@ from django.views.generic.edit import UpdateView
 from .forms import AccountCreationForm, LoginForm, ProfileCreationForm
 from .models import Profile
 from .utils import login_agent
-from braces.views import SuperuserRequiredMixin
+# from braces.views import SuperuserRequiredMixin
 
 
 # class CreateOnlineBankAccountView2(CreateView):
@@ -44,7 +44,7 @@ from braces.views import SuperuserRequiredMixin
 #         return super().form_invalid(form)
 
 
-class UserRegistrationView(SuperuserRequiredMixin, FormView):
+class UserRegistrationView(FormView):
     template_name = 'accounts/bank_account_creation.html'
     form_class = AccountCreationForm
     redirect_authenticated_user = True

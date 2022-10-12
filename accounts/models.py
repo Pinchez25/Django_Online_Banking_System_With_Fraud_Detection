@@ -1,10 +1,10 @@
 from creditcards.models import CardNumberField
 from django.contrib.auth.models import AbstractUser
-# import password validator
 from django.core.validators import MaxValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+# from utils.login_agent import process_profile_image
 USER_TYPES = (
     ('individual', 'Individual'),
     ('business', 'Business'),
@@ -20,10 +20,11 @@ ACCOUNT_TYPES = (
 
 
 class Account(AbstractUser):
-    account_type = models.CharField(_("Type of Account"), max_length=50, choices=ACCOUNT_TYPES)
+    account_type = models.CharField(_("Type of Account"), max_length=50, choices=ACCOUNT_TYPES, default="savings")
     # account_number = models.CharField(_("Account Number"), max_length=50, null=True, blank=True)
     cc_number = CardNumberField(_('Credit Card'), help_text=_('Customer credit card number'), null=True, blank=True)
-    user_type = models.CharField(_("User Type"), max_length=50, choices=USER_TYPES, null=True, blank=True)
+    user_type = models.CharField(_("User Type"), max_length=50, choices=USER_TYPES, default="individual", null=True,
+                                 blank=True)
     email = models.EmailField(_("Email"), unique=True)
     national_id = models.IntegerField(_('National ID'), unique=True, default=0,
                                       validators=[MaxValueValidator(99999999, message="Invalid National ID")])
@@ -65,6 +66,10 @@ class Profile(models.Model):
         db_table = 'profile'
         ordering = ['-created']
 
+    # process profile image on save
+    # def save(self, *args, **kwargs):
+    #     process_profile_image(self.profile_image.url,200,200)
+    #     super().save(*args, **kwargs)
 
 # class Customer(models.Model):
 #     account_number = models.CharField(_("Account Number"), max_length=50)

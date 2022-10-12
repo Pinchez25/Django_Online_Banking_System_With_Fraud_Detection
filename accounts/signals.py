@@ -14,18 +14,10 @@ def generate_unique_cc_number():
     return cc_number
 
 
-# def generate_unique_account_number():
-#     account_number = random.randint(1000000000, 9999999999)
-#     if Account.objects.filter(account_number=account_number).exists():
-#         return generate_unique_account_number()
-#     return account_number
-
-
 @receiver(post_save, sender=Account)
 def create_account(sender, instance, created, **kwargs):
     if created:
         instance.cc_number = generate_unique_cc_number()
-        # instance.cc_number = generate_unique_cc_number()
         instance.save()
 
         # create a profile for the account holder
@@ -42,21 +34,3 @@ def create_account(sender, instance, created, **kwargs):
             [instance.email],
             fail_silently=False,
         )
-
-# @receiver(post_save, sender=Customer)
-# def create_customer(sender, instance, created, **kwargs):
-#     if created:
-#         print("Customer created")
-#
-#         instance.cc_number = generate_unique_cc_number()
-#         instance.save()
-#
-#         # send a welcome email to the user
-#         send_mail(
-#             'Welcome to our e-banking',
-#             'Thank you for opening an account with us. Your credit card number is ' + str(
-#                 instance.cc_number),
-#             settings.EMAIL_HOST_USER,
-#             [instance.email],
-#             fail_silently=False,
-#         )

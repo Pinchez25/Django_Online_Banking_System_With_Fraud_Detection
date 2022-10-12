@@ -50,10 +50,10 @@ class WithdrawForm(TransactionForm):
                 'You can\'t withdraw more than your account balance'
             )
         if amount > settings.MAXIMUM_WITHDRAW_AMOUNT:
-            raise ValidationError(f"Withdraw limit is {settings.MAXIMUM_WITHDRAW_AMOUNT}")
+            raise ValidationError(f"Withdraw limit is Ksh.{settings.MAXIMUM_WITHDRAW_AMOUNT}")
 
         if amount < settings.MINIMUM_WITHDRAW_AMOUNT:
-            raise ValidationError(f"You need to withdraw at least {settings.MINIMUM_WITHDRAW_AMOUNT}")
+            raise ValidationError(f"You need to withdraw at least Ksh.{settings.MINIMUM_WITHDRAW_AMOUNT}")
 
         return amount
 
@@ -89,14 +89,14 @@ class SendMoneyForm(TransactionForm):
 
         if amount < settings.MINIMUM_TRANSACTION_AMOUNT:
             raise ValidationError(""
-                                  f"The minimum transaction amount is {settings.MINIMUM_TRANSACTION_AMOUNT}")
+                                  f"The minimum transaction amount is Ksh.{settings.MINIMUM_TRANSACTION_AMOUNT}")
 
         if amount > settings.MAXIMUM_TRANSACTION_AMOUNT:
             raise ValidationError(""
-                                  f"The maximum transaction amount is {settings.MAXIMUM_TRANSACTION_AMOUNT}")
+                                  f"The maximum transaction amount is Ksh.{settings.MAXIMUM_TRANSACTION_AMOUNT}")
 
         if amount > balance:
             raise ValidationError(''
                                   'You don`t have enough cash in your account to complete this transaction.\n'
-                                  f'Your balance if {balance}')
+                                  f'Your balance is Ksh.{balance}')
         return amount
