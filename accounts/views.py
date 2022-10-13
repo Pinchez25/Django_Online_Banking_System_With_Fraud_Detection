@@ -10,6 +10,8 @@ from django.views.generic.edit import UpdateView
 from .forms import AccountCreationForm, LoginForm, ProfileCreationForm
 from .models import Profile
 from .utils import login_agent
+
+
 # from braces.views import SuperuserRequiredMixin
 
 
@@ -103,6 +105,10 @@ def user_login(request):
 def logout_user(request):
     logout(request)
     return redirect('login')
+
+
+def account_locked(request):
+    return render(request, 'account_locked.html')
 
 
 class ProfileView(LoginRequiredMixin, DetailView):

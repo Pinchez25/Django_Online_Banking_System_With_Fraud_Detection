@@ -35,9 +35,12 @@ INSTALLED_APPS = [
     'crispy_bootstrap5',
     'captcha',
     'django_user_agents',
+    'axes',
     'preventconcurrentlogins',
     'baton.autodiscover',
 ]
+AXES_LOCKOUT_URL = reverse_lazy('account-locked')
+
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 RECAPTCHA_PUBLIC_KEY = '6LdLkzAiAAAAAH-w4R6x_NK0vfdUxY5dzbKiuLol'
 RECAPTCHA_PRIVATE_KEY = '6LdLkzAiAAAAAA1FaTHbdJMxS3zTJ05JRzcycnQg'
@@ -46,9 +49,12 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 CRISPY_FAIL_SILENTLY = not DEBUG
 
 CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379',
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     }
 }
 USER_AGENTS_CACHE = 'default'
@@ -64,8 +70,14 @@ MIDDLEWARE = [
     "django_browser_reload.middleware.BrowserReloadMiddleware",
     'django_user_agents.middleware.UserAgentMiddleware',
     'preventconcurrentlogins.middleware.PreventConcurrentLoginsMiddleware',
-]
+    'axes.middleware.AxesMiddleware',
 
+]
+# DEFENDER_LOGIN_FAILURE_LIMIT = 3
+# DEFENDER_LOCKOUT_URL = '/locked/'
+# DEFENDER_REDIS_URL = 'redis://localhost:6379/0'
+AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
+AXES_USE_USER_AGENT = True
 ROOT_URLCONF = "Online_Banking_System.urls"
 
 TEMPLATES = [
@@ -118,7 +130,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator", },
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator", },
 ]
-
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
