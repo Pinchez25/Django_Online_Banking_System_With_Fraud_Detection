@@ -62,6 +62,7 @@ USER_AGENTS_CACHE = 'default'
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django_session_timeout.middleware.SessionTimeoutMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -77,8 +78,14 @@ MIDDLEWARE = [
 # DEFENDER_LOCKOUT_URL = '/locked/'
 # DEFENDER_REDIS_URL = 'redis://localhost:6379/0'
 AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
-AXES_USE_USER_AGENT = True
+# AXES_USE_USER_AGENT = True
 ROOT_URLCONF = "Online_Banking_System.urls"
+
+
+SESSION_EXPIRE_SECONDS = 60
+SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True
+SESSION_TIMEOUT_REDIRECT = reverse_lazy('login')
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 TEMPLATES = [
     {
