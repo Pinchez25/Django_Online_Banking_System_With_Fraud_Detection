@@ -27,3 +27,5 @@ urlpatterns = [
     path('update-profile/<str:pk>/', UpdateProfile.as_view(), name='update-profile')
 
 ]
+
+

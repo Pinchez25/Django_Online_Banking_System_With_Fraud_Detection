@@ -11,6 +11,7 @@ django-browser-reload==1.6.0
 django-credit-cards==0.4.1
 django-crispy-forms==1.14.0
 django-defender==0.9.5
+django-extensions==3.2.1
 django-ipware==4.0.2
 django-js-asset==2.0.0
 django-preventconcurrentlogins==0.8.2
@@ -20,6 +21,7 @@ django-session-timeout==0.1.0
 django-user-agents==0.4.0
 packaging==21.3
 Pillow==9.2.0
+pydot==1.4.2
 pyparsing==3.0.9
 redis==4.3.4
 six==1.16.0
