@@ -19,8 +19,9 @@ def generate_unique_id():
 
 
 class Transaction(models.Model):
-    transaction_id = models.CharField(max_length=16, default=generate_unique_id, unique=True)
-    account = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    transaction_id = models.CharField(max_length=16, default=generate_unique_id, unique=True,
+                                      verbose_name=_("Transaction ID"))
+    account = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_("Account"))
     type = models.CharField(_('Type of Transaction'), max_length=1, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(_('Amount'), max_digits=12, decimal_places=2)
     date = models.DateField(auto_now=True)
