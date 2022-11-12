@@ -86,3 +86,6 @@ class Profile(models.Model):
 #         verbose_name_plural = _('Customers')
 #         db_table = 'customer'
 #         ordering = ['-created']
+
+
+
