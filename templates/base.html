@@ -45,6 +45,16 @@
 {% endblock %}
 
 {% include 'messages.html' %}
+<hr>
+<div class="container-fluid">
+    <div class="row mt-4">
+        <div class="col-md-12">
+            {% if request.path != "/accounts/login/" and request.path != "/accounts/register/" and request.path != "/accounts/reset_password/" %}
+                {% include 'footer.html' %}
+            {% endif %}
+        </div>
+    </div>
+</div>
 
 <script src="{% static 'js/jquery.easing.min.js' %}"></script>
 <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
@@ -54,5 +64,6 @@
 
 {% block scripts %}
 {% endblock %}
+
 </body>
 </html>
