@@ -36,6 +36,9 @@ class Account(AbstractUser):
         db_table = 'auth_user'
         # app_label = 'auth'
 
+    def __str__(self):
+        return self.username
+
 
 """
     Profile of the account holder

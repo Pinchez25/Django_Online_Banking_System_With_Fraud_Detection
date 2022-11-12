@@ -23,7 +23,7 @@ urlpatterns = [
          name='password_reset_complete'),
 
     # profile view
-    path('profile/<str:pk>/', ProfileView.as_view(), name='profile'),
+    path('<str:pk>/<str:account>-profile/', ProfileView.as_view(), name='profile'),
     path('update-profile/<str:pk>/', UpdateProfile.as_view(), name='update-profile')
 
 ]

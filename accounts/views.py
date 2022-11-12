@@ -116,6 +116,7 @@ class ProfileView(LoginRequiredMixin, DetailView):
     context_object_name = 'profile'
     template_name = 'accounts/profile.html'
 
+
     def get_context_data(self, **kwargs):
         context = super(ProfileView, self).get_context_data()
         context['account_id'] = context['profile'].account.id

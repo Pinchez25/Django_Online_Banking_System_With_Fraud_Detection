@@ -81,7 +81,7 @@
         if (denied) {
             // redirect to profile page after 3 seconds
             setTimeout(() => {
-                window.location.href = '{% url 'profile' request.user.profile.id %}';
+                window.location.href = '{% url 'profile' request.user.profile.id request.user %}';
             }, 3000);
         }
     </script>
