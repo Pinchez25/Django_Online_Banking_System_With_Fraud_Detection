@@ -20,6 +20,7 @@ class HomeView(LoginRequiredMixin, TemplateView):
         context['year'] = datetime.now().year
         context['user_profile_id'] = self.request.user.profile.id
         context['user_profile'] = self.request.user.profile
+        context['user_transactions'] = self.request.user.transaction_set.all()
         return context
 
 
@@ -106,3 +107,12 @@ class SendMoneyView(CreateTransactionMixin):
     def form_invalid(self, form):
         messages.error(self.request, 'Error sending money')
         return super(SendMoneyView, self).form_invalid(form)
+
+# class TransactionHistoryView(LoginRequiredMixin, ListView):
+#     model = Transaction
+#     template_name = 'bank/transaction-history.html'
+#
+#     def get_context_data(self, **kwargs):
+#         context = super(TransactionHistoryView, self).get_context_data(**kwargs)
+#         context['user_transactions'] = self.request.user.transaction_set.all()
+#         return context
