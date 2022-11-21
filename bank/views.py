@@ -10,6 +10,9 @@ from django.views.generic.list import ListView
 from accounts.models import Account
 from .forms import DepositForm, WithdrawForm, SendMoneyForm
 from .models import Transaction
+from ml_model.detect_fraud import detect_fraud
+from ml_model.report_fraudulent_transactions import report_fraudulent_transactions
+from ml_model.block_account import block_account
 
 
 class HomeView(LoginRequiredMixin, TemplateView):
@@ -46,6 +49,7 @@ class DepositMoneyView(CreateTransactionMixin):
     def form_valid(self, form):
         amount = form.cleaned_data.get('amount')
         account = self.request.user
+
         with transaction.atomic():
             account.bank_balances += amount
             account.save()
@@ -85,24 +89,25 @@ class SendMoneyView(CreateTransactionMixin):
         amount = form.cleaned_data.get('amount')
         username = form.cleaned_data.get('recipient')
 
-        with transaction.atomic():
-            account = self.request.user
-            account.bank_balances -= amount
-            account.save()
+        recipient = Account.objects.get(username=username)
+        sender_cc_number = self.request.user.cc_number
+        receiver_cc_number = recipient.cc_number
 
-            recipient = Account.objects.get(username=username)
-            if not account == recipient:
+        is_fraud = detect_fraud(sender_cc_number, receiver_cc_number, amount)
+        print(is_fraud)
+        if is_fraud:
+            messages.error(self.request, 'Error sending money')
+            block_account(self.request)
+            report_fraudulent_transactions(recipient.email)
+        else:
+            with transaction.atomic():
+                self.request.user.bank_balances -= amount
                 recipient.bank_balances += amount
+                self.request.user.save()
                 recipient.save()
-                messages.success(self.request, f"Money sent successfully to {str(username).title()}")
-            else:
-                # TODO: For now re-adding the sent money is a Hacky fix - implement select_update() with atomic
-                #  transaction later
-                account.bank_balances += amount
-                account.save()
-                messages.warning(self.request, "You can`t send money to yourself")
+                messages.success(self.request, 'Ksh. {} was sent to {}'.format(amount, username))
 
-        return super(SendMoneyView, self).form_valid(form)
+            return super(SendMoneyView, self).form_valid(form)
 
     def form_invalid(self, form):
         messages.error(self.request, 'Error sending money')

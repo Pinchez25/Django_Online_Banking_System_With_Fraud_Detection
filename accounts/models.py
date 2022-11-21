@@ -30,6 +30,8 @@ class Account(AbstractUser):
                                       validators=[MaxValueValidator(99999999, message="Invalid National ID")])
     bank_balances = models.DecimalField(_('Balance'), max_digits=12, decimal_places=2, default=0.00)
 
+    is_blocked = models.BooleanField(_("Blocked"), default=False)
+
     # account number and national_id should be unique together
     class Meta:
         unique_together = ('cc_number', 'national_id')
@@ -69,26 +71,7 @@ class Profile(models.Model):
         db_table = 'profile'
         ordering = ['-created']
 
-    # process profile image on save
-    # def save(self, *args, **kwargs):
-    #     process_profile_image(self.profile_image.url,200,200)
-    #     super().save(*args, **kwargs)
 
-# class Customer(models.Model):
-#     account_number = models.CharField(_("Account Number"), max_length=50)
-#     password = models.CharField(_("Password"), max_length=50, validators=[validate_password])
-#     cc_number = CardNumberField(_('Credit Card'), help_text=_('Customer credit card number'), null=True, blank=True)
-#     created = models.DateTimeField(auto_now_add=True)
-#     updated = models.DateTimeField(auto_now=True)
-#
-#     def __str__(self):
-#         return str(self.cc_number)
-#
-#     class Meta:
-#         verbose_name = _('Customer')
-#         verbose_name_plural = _('Customers')
-#         db_table = 'customer'
-#         ordering = ['-created']
 
 
 

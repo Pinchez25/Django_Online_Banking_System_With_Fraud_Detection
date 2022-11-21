@@ -68,7 +68,7 @@ class SendMoneyForm(TransactionForm):
 
     def __init__(self, *args, **kwargs):
         super(SendMoneyForm, self).__init__(*args, **kwargs)
-        self.fields['recipient'].widget.attrs.update({'placeholder': 'Enter the recipient ...'})
+        self.fields['recipient'].widget.attrs.update({'placeholder': 'Enter the credit card number of recipient ...'})
 
     def get_initial_for_field(self, field, field_name):
         if field_name == 'type':

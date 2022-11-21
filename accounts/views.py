@@ -12,40 +12,6 @@ from .models import Profile
 from .utils import login_agent
 
 
-# from braces.views import SuperuserRequiredMixin
-
-
-# class CreateOnlineBankAccountView2(CreateView):
-#     template_name = 'accounts/create_online_bank_account.html'
-#     form_class = OnlineBankAccountCreationForm
-#     success_url = reverse_lazy('dashboard')
-#
-#     def form_valid(self, form):
-#         form.instance.account = Account.objects.get(account_number=form.cleaned_data['account_number'])
-#         form.save()
-#         messages.success(self.request, 'Online bank account created successfully')
-#         return super(CreateOnlineBankAccountView2, self).form_valid(form)
-#
-#     def form_invalid(self, form):
-#         messages.error(self.request, 'Error creating online bank account')
-#         return super(CreateOnlineBankAccountView2, self).form_invalid(form)
-#
-#
-# class CreateOnlineBankAccountView(FormView):
-#     template_name = 'accounts/create_online_bank_account.html'
-#     form_class = OnlineBankAccountCreationForm
-#     success_url = reverse_lazy('dashboard')
-#
-#     def form_valid(self, form):
-#         form.save()
-#         messages.success(self.request, 'Account created successfully')
-#         return super().form_valid(form)
-#
-#     def form_invalid(self, form):
-#         # messages.error(self.request, 'Account creation failed')
-#         return super().form_invalid(form)
-
-
 class UserRegistrationView(FormView):
     template_name = 'accounts/bank_account_creation.html'
     form_class = AccountCreationForm
@@ -71,6 +37,10 @@ class UserRegistrationView(FormView):
     #     return super(UserRegistrationView, self).get(*args, **kwargs)
 
 
+def account_blocked(request):
+    return render(request, 'accounts/account_blocked.html')
+
+
 def user_login(request):
     # if user is already logged in, redirect to dashboard
     if request.user.is_authenticated:
@@ -84,11 +54,15 @@ def user_login(request):
             try:
                 username = get_user_model().objects.get(email=email).username
                 user = authenticate(request, username=username, password=password)
-                if user is not None:
+
+                if user is not None and not user.is_blocked:
                     login(request, user)
                     login_agent.get_login_agent(request)
                     messages.success(request, 'Login success')
                     return redirect(request.GET.get('next') if 'next' in request.GET else 'dashboard')
+
+                elif user.is_blocked:
+                    return redirect('account-blocked')
                 else:
                     messages.error(request, 'Invalid email or password')
 
@@ -115,7 +89,6 @@ class ProfileView(LoginRequiredMixin, DetailView):
     model = Profile
     context_object_name = 'profile'
     template_name = 'accounts/profile.html'
-
 
     def get_context_data(self, **kwargs):
         context = super(ProfileView, self).get_context_data()
