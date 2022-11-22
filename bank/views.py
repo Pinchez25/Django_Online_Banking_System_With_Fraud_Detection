@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.views.generic import TemplateView
@@ -20,10 +21,11 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        current_user = get_user_model().objects.get(username=self.request.user)
         context['year'] = datetime.now().year
-        context['user_profile_id'] = self.request.user.profile.id
-        context['user_profile'] = self.request.user.profile
-        context['user_transactions'] = self.request.user.transaction_set.all()
+        context['user_profile_id'] = current_user.profile.id
+        context['user_profile'] = current_user.profile
+        context['user_transactions'] = current_user.transaction_set.all()
         return context
 
 
@@ -48,8 +50,7 @@ class DepositMoneyView(CreateTransactionMixin):
 
     def form_valid(self, form):
         amount = form.cleaned_data.get('amount')
-        account = self.request.user
-
+        account = get_user_model().objects.select_for_update().get(username=self.request.user)
         with transaction.atomic():
             account.bank_balances += amount
             account.save()
@@ -68,7 +69,7 @@ class WithdrawMoneyView(CreateTransactionMixin):
 
     def form_valid(self, form):
         amount = form.cleaned_data.get('amount')
-        account = self.request.user
+        account = get_user_model().objects.select_for_update().get(username=self.request.user)
         with transaction.atomic():
             account.bank_balances -= amount
             account.save()
@@ -89,8 +90,10 @@ class SendMoneyView(CreateTransactionMixin):
         amount = form.cleaned_data.get('amount')
         username = form.cleaned_data.get('recipient')
 
-        recipient = Account.objects.get(username=username)
-        sender_cc_number = self.request.user.cc_number
+        recipient = Account.objects.select_for_update().get(username=username)
+        payor = get_user_model().objects.select_for_update().get(username=self.request.user)
+        print(dir(payor))
+        sender_cc_number = payor.cc_number
         receiver_cc_number = recipient.cc_number
 
         is_fraud = detect_fraud(sender_cc_number, receiver_cc_number, amount)
@@ -101,9 +104,9 @@ class SendMoneyView(CreateTransactionMixin):
             report_fraudulent_transactions(recipient.email)
         else:
             with transaction.atomic():
-                self.request.user.bank_balances -= amount
+                payor.bank_balances -= amount
+                payor.save()
                 recipient.bank_balances += amount
-                self.request.user.save()
                 recipient.save()
                 messages.success(self.request, 'Ksh. {} was sent to {}'.format(amount, username))
 
@@ -112,12 +115,3 @@ class SendMoneyView(CreateTransactionMixin):
     def form_invalid(self, form):
         messages.error(self.request, 'Error sending money')
         return super(SendMoneyView, self).form_invalid(form)
-
-# class TransactionHistoryView(LoginRequiredMixin, ListView):
-#     model = Transaction
-#     template_name = 'bank/transaction-history.html'
-#
-#     def get_context_data(self, **kwargs):
-#         context = super(TransactionHistoryView, self).get_context_data(**kwargs)
-#         context['user_transactions'] = self.request.user.transaction_set.all()
-#         return context
