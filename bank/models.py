@@ -24,7 +24,7 @@ class Transaction(models.Model):
     account = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_("Account"))
     type = models.CharField(_('Type of Transaction'), max_length=1, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(_('Amount'), max_digits=12, decimal_places=2)
-    date = models.DateField(auto_now=True)
+    date = models.DateTimeField(auto_now_add=True, verbose_name=_("Date"))
 
     def __str__(self):
         return str(self.transaction_id)

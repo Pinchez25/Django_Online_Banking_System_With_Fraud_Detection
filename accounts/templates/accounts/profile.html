@@ -48,7 +48,7 @@
                             <div class="buttons">
 
                                 <button class="btn btn-outline-primary px-4">Message</button>
-                                <button class="btn btn-primary px-4 ms-3">Contact</button>
+                                <a class="btn btn-primary px-4 ms-3" href="/">Back to Dashboard</a>
                             </div>
 
 
@@ -81,7 +81,7 @@
         if (denied) {
             // redirect to profile page after 3 seconds
             setTimeout(() => {
-                window.location.href = '{% url 'profile' request.user.profile.id request.user %}';
+                window.location.href = '{% url 'profile' request.user.profile.id %}';
             }, 3000);
         }
     </script>

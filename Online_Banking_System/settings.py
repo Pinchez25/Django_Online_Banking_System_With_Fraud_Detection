@@ -82,7 +82,6 @@ AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
 # AXES_USE_USER_AGENT = True
 ROOT_URLCONF = "Online_Banking_System.urls"
 
-
 SESSION_EXPIRE_SECONDS = 300
 SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True
 SESSION_TIMEOUT_REDIRECT = reverse_lazy('login')
@@ -120,10 +119,21 @@ WSGI_APPLICATION = "Online_Banking_System.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "bank",
+        "USER": "postgres",
+        "PASSWORD": "1234",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
 
@@ -183,7 +193,7 @@ MEDIA_URL = 'media/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
-GRAPH_MODELS ={
+GRAPH_MODELS = {
     'all_applications': True,
     'graph_models': True,
 }

@@ -18,6 +18,7 @@
         </button>
 
         <!-- Topbar Search -->
+    {% comment %}
         <form
                 class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
             <div class="input-group">
@@ -30,6 +31,7 @@
                 </div>
             </div>
         </form>
+        {% endcomment %}
 
         <!-- Topbar Navbar -->
         <ul class="navbar-nav ml-auto">
@@ -137,7 +139,7 @@
                 <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                      aria-labelledby="userDropdown">
                     <a class="dropdown-item"
-                       href="{% url 'profile' user_profile_id user_profile.account %}">
+                       href="{% url 'profile' user_profile_id %}">
                         <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                         Profile
                     </a>
@@ -268,6 +270,7 @@
                             <th>Type</th>
                             <th>Amount</th>
                             <th>Date</th>
+                            <th>Time</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -279,10 +282,14 @@
                                         Withdrawal
                                     {% elif transaction.type == 'D' %}
                                         Deposit
+                                    {% elif transaction.type == 'T' %}
+                                        Transfer
                                     {% endif %}
+
                                 </td>
                                 <td>{{ transaction.amount }}</td>
-                                <td>{{ transaction.date|date }}</td>
+                                <td>{{ transaction.date|date:"D, d M, Y" }}</td>
+                                <td>{{ transaction.date|date:"h:m a" }}</td>
 
                             </tr>
                         {% endfor %}

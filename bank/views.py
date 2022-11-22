@@ -50,8 +50,8 @@ class DepositMoneyView(CreateTransactionMixin):
 
     def form_valid(self, form):
         amount = form.cleaned_data.get('amount')
-        account = get_user_model().objects.select_for_update().get(username=self.request.user)
         with transaction.atomic():
+            account = get_user_model().objects.select_for_update().get(username=self.request.user)
             account.bank_balances += amount
             account.save()
             messages.success(self.request, 'Ksh. {} was deposited to your account'.format(amount))
@@ -69,8 +69,8 @@ class WithdrawMoneyView(CreateTransactionMixin):
 
     def form_valid(self, form):
         amount = form.cleaned_data.get('amount')
-        account = get_user_model().objects.select_for_update().get(username=self.request.user)
         with transaction.atomic():
+            account = get_user_model().objects.select_for_update().get(username=self.request.user)
             account.bank_balances -= amount
             account.save()
             messages.success(self.request, 'Ksh. {} was withdrawn from your account'.format(amount))
@@ -90,27 +90,27 @@ class SendMoneyView(CreateTransactionMixin):
         amount = form.cleaned_data.get('amount')
         username = form.cleaned_data.get('recipient')
 
-        recipient = Account.objects.select_for_update().get(username=username)
-        payor = get_user_model().objects.select_for_update().get(username=self.request.user)
-        print(dir(payor))
-        sender_cc_number = payor.cc_number
-        receiver_cc_number = recipient.cc_number
+        with transaction.atomic():
+            recipient = Account.objects.select_for_update().get(username=username)
+            payor = get_user_model().objects.select_for_update().get(username=self.request.user)
+            print(dir(payor))
+            sender_cc_number = payor.cc_number
+            receiver_cc_number = recipient.cc_number
 
-        is_fraud = detect_fraud(sender_cc_number, receiver_cc_number, amount)
-        print(is_fraud)
-        if is_fraud:
-            messages.error(self.request, 'Error sending money')
-            block_account(self.request)
-            report_fraudulent_transactions(recipient.email)
-        else:
-            with transaction.atomic():
+            is_fraud = detect_fraud(sender_cc_number, receiver_cc_number, amount)
+            print(is_fraud)
+            if is_fraud:
+                messages.error(self.request, 'Error sending money')
+                block_account(self.request)
+                report_fraudulent_transactions(recipient.email)
+            else:
                 payor.bank_balances -= amount
                 payor.save()
                 recipient.bank_balances += amount
                 recipient.save()
                 messages.success(self.request, 'Ksh. {} was sent to {}'.format(amount, username))
 
-            return super(SendMoneyView, self).form_valid(form)
+        return super(SendMoneyView, self).form_valid(form)
 
     def form_invalid(self, form):
         messages.error(self.request, 'Error sending money')
