@@ -106,8 +106,8 @@ class SendMoneyView(CreateTransactionMixin):
             receiver_cc_number = recipient.cc_number
 
             is_fraud = detect_fraud(sender_cc_number, receiver_cc_number, amount)
-            score = print_fraud_score(sender_cc_number, receiver_cc_number, amount)
-            print('Score: ', score)
+            # score = print_fraud_score(sender_cc_number, receiver_cc_number, amount)
+            # print('Score: ', score)
             print(f"Is fraud: {is_fraud}")
             if is_fraud:
                 messages.error(self.request, 'Error sending money')
