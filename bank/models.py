@@ -28,3 +28,20 @@ class Transaction(models.Model):
 
     def __str__(self):
         return str(self.transaction_id)
+
+
+class TransactionLogs(models.Model):
+    sender = models.CharField(max_length=16, verbose_name=_("sender"), null=True, blank=True)
+    receiver = models.CharField(max_length=16, verbose_name=_("receiver"), null=True, blank=True)
+    amount = models.DecimalField(_('Amount'), max_digits=12, decimal_places=2)
+    cc_number = models.CharField(max_length=16, verbose_name=_("creditcard_number"), null=True, blank=True)
+    rec_cc_number = models.CharField(max_length=16, verbose_name=_("receiver_creditcard"), null=True, blank=True)
+    date = models.DateTimeField(verbose_name=_("Date"))
+    is_fraud = models.IntegerField(verbose_name=_("Fraud"), default=0)
+
+    def __str__(self):
+        return str(self.pk)
+
+    class Meta:
+        verbose_name = _("Transaction Logs")
+        verbose_name_plural = _("Transaction Logs")

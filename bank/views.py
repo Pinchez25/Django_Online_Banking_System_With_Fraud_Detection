@@ -11,6 +11,7 @@ from django.views.generic.list import ListView
 from accounts.models import Account
 from .forms import DepositForm, WithdrawForm, SendMoneyForm
 from .models import Transaction
+from bank.utils.log_transactions import create_transaction_logs
 from ml_model.detect_fraud import detect_fraud
 from ml_model.report_fraudulent_transactions import report_fraudulent_transactions
 from ml_model.block_account import block_account
@@ -54,6 +55,10 @@ class DepositMoneyView(CreateTransactionMixin):
             account = get_user_model().objects.select_for_update().get(username=self.request.user)
             account.bank_balances += amount
             account.save()
+            create_transaction_logs(
+                sender=account, receiver=None, amount=amount, cc_number=account.cc_number,
+                rec_cc_number=None,
+                created=datetime.now(), is_fraud=0)
             messages.success(self.request, 'Ksh. {} was deposited to your account'.format(amount))
 
         return super(DepositMoneyView, self).form_valid(form)
@@ -73,6 +78,10 @@ class WithdrawMoneyView(CreateTransactionMixin):
             account = get_user_model().objects.select_for_update().get(username=self.request.user)
             account.bank_balances -= amount
             account.save()
+            create_transaction_logs(
+                sender=account, receiver=None, amount=amount, cc_number=account.cc_number,
+                rec_cc_number=None,
+                created=datetime.now(), is_fraud=0)
             messages.success(self.request, 'Ksh. {} was withdrawn from your account'.format(amount))
 
         return super(WithdrawMoneyView, self).form_valid(form)
@@ -103,11 +112,19 @@ class SendMoneyView(CreateTransactionMixin):
                 messages.error(self.request, 'Error sending money')
                 block_account(self.request)
                 report_fraudulent_transactions(recipient.email)
+                create_transaction_logs(
+                    sender=payor, receiver=recipient, amount=amount, cc_number=sender_cc_number,
+                    rec_cc_number=receiver_cc_number,
+                    created=datetime.now(), is_fraud=1)
             else:
                 payor.bank_balances -= amount
                 payor.save()
                 recipient.bank_balances += amount
                 recipient.save()
+                create_transaction_logs(
+                    sender=payor, receiver=recipient, amount=amount, cc_number=sender_cc_number,
+                    rec_cc_number=receiver_cc_number,
+                    created=datetime.now(), is_fraud=0)
                 messages.success(self.request, 'Ksh. {} was sent to {}'.format(amount, username))
 
         return super(SendMoneyView, self).form_valid(form)
