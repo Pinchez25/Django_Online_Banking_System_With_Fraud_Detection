@@ -12,7 +12,7 @@ from accounts.models import Account
 from .forms import DepositForm, WithdrawForm, SendMoneyForm
 from .models import Transaction
 from bank.utils.log_transactions import create_transaction_logs
-from ml_model.detect_fraud import detect_fraud
+from ml_model.detect_fraud import detect_fraud, print_fraud_score
 from ml_model.report_fraudulent_transactions import report_fraudulent_transactions
 from ml_model.block_account import block_account
 
@@ -102,12 +102,13 @@ class SendMoneyView(CreateTransactionMixin):
         with transaction.atomic():
             recipient = Account.objects.select_for_update().get(username=username)
             payor = get_user_model().objects.select_for_update().get(username=self.request.user)
-            print(dir(payor))
             sender_cc_number = payor.cc_number
             receiver_cc_number = recipient.cc_number
 
             is_fraud = detect_fraud(sender_cc_number, receiver_cc_number, amount)
-            print(is_fraud)
+            score = print_fraud_score(sender_cc_number, receiver_cc_number, amount)
+            print('Score: ', score)
+            print(f"Is fraud: {is_fraud}")
             if is_fraud:
                 messages.error(self.request, 'Error sending money')
                 block_account(self.request)

@@ -20,7 +20,7 @@ class UserRegistrationView(FormView):
     def form_valid(self, form):
         user = form.save()
         if user is not None:
-            login(self.request, user)
+            login(self.request, user,  backend='django.contrib.auth.backends.ModelBackend')
             messages.success(self.request, 'Account created successfully')
         return super(UserRegistrationView, self).form_valid(form)
 
@@ -56,7 +56,7 @@ def user_login(request):
                 user = authenticate(request, username=username, password=password)
 
                 if user is not None and not user.is_blocked:
-                    login(request, user)
+                    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                     login_agent.get_login_agent(request)
                     messages.success(request, 'Login success')
                     return redirect(request.GET.get('next') if 'next' in request.GET else 'dashboard')

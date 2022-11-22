@@ -1,8 +1,7 @@
 import pandas as pd
 
 
-def detect_fraud(sender_cc_number, receiver_cc_number, amount)->bool:
-    is_fraud = False
+def detect_fraud(sender_cc_number, receiver_cc_number, amount) -> bool:
     model = pd.read_pickle('ml_model/fraud_detection_model.pickle')
 
     result = model.predict([[sender_cc_number, receiver_cc_number, amount]])
@@ -13,3 +12,11 @@ def detect_fraud(sender_cc_number, receiver_cc_number, amount)->bool:
         is_fraud = False
 
     return is_fraud
+
+
+def print_fraud_score(sender_cc_number, receiver_cc_number, amount):
+    model = pd.read_pickle('ml_model/fraud_detection_model.pickle')
+
+    result = model.predict([[sender_cc_number, receiver_cc_number, amount]])
+
+    return result[0]
