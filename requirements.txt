@@ -3,7 +3,7 @@ async-timeout==4.0.2
 backports.zoneinfo==0.2.1
 crispy-bootstrap5==0.6
 Deprecated==1.2.13
-Django==4.1.1
+Django==4.1.13
 django-axes==5.39.0
 django-baton==2.4.1
 django-braces==1.15.0
