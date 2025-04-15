@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-livxu(*_&o$bpvhw3grd*0=%gu_!j2cexiazd!)=fq0zsfkakg"
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -43,8 +43,8 @@ INSTALLED_APPS = [
 AXES_LOCKOUT_URL = reverse_lazy('account-locked')
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
-RECAPTCHA_PUBLIC_KEY = '6LdLkzAiAAAAAH-w4R6x_NK0vfdUxY5dzbKiuLol'
-RECAPTCHA_PRIVATE_KEY = '6LdLkzAiAAAAAA1FaTHbdJMxS3zTJ05JRzcycnQg'
+RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY')
+RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY')
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 CRISPY_FAIL_SILENTLY = not DEBUG
