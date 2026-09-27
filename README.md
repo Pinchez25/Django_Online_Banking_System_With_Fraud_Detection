@@ -4,17 +4,17 @@ This is an educational Django banking application. It demonstrates account manag
 
 ## Local Setup
 
-Requirements: Python 3.14+, `uv`, Docker Compose, and a Redis server listening on `127.0.0.1:6379`.
+Requirements: Python 3.14+, `uv`, and Docker Compose.
 
 ```sh
 cp .env.example .env
 uv sync --frozen
-docker compose up -d postgres
+docker compose up -d postgres redis
 uv run python manage.py migrate
-uv run python manage.py runserver
+uv run daphne -b 127.0.0.1 -p 8000 Online_Banking_System.asgi:application
 ```
 
-The application runs at `http://127.0.0.1:8000`. Compose starts PostgreSQL only; Django and Redis run on the host. PostgreSQL is bound to `127.0.0.1:5433` by default to avoid colliding with a local PostgreSQL installation. Change `POSTGRES_PORT` in `.env` if that port is already in use. Compose reads the database name and credentials from `.env`.
+The application runs at `http://127.0.0.1:8000`; notification alerts and inbox messages are pushed over authenticated WebSockets. Compose starts PostgreSQL and Redis; Django runs on the host. Both services bind only to loopback by default. Change `POSTGRES_PORT` or `REDIS_PORT` in `.env` if those ports are already in use, and update `REDIS_URL` and `CHANNEL_REDIS_URL` to match the Redis port.
 
 Run tests with:
 
@@ -22,9 +22,9 @@ Run tests with:
 uv run python manage.py test
 ```
 
-Stop PostgreSQL with `docker compose down`. Its named volume keeps database data between restarts. `docker compose down -v` deletes that data.
+Stop PostgreSQL and Redis with `docker compose down`. PostgreSQL's named volume keeps database data between restarts. `docker compose down -v` deletes that data.
 
-`.env` is ignored by Git. `.env.example` contains development-only values; replace the secret and database credentials before using any shared environment. Production must set `DEBUG=false`, a strong `SECRET_KEY`, appropriate `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`, secure database credentials, and real email settings. Do not use Django's development server in production.
+`.env` is ignored by Git. `.env.example` contains development-only values; replace the secret and database credentials before using any shared environment. Production must set `DEBUG=false`, a strong `SECRET_KEY`, appropriate `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`, secure database credentials, and real email settings. Set `CHANNEL_REDIS_URL` to a private Redis endpoint with TLS and authentication, and serve `Online_Banking_System.asgi:application` with Daphne (or another ASGI server) behind an HTTPS reverse proxy. WebSockets use `wss` automatically on HTTPS pages. Do not use Django's development server in production.
 
 ## Current Fraud Model Limitations
 
