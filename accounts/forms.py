@@ -1,60 +1,44 @@
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.core.exceptions import ValidationError
+from django.forms import inlineformset_factory
 
-from .models import Account, Profile
-
-
-class BootstrapFormMixin:
-    """Adds a crispy-forms helper and Bootstrap widget classes to every field on the form."""
-
-    submit_label = "Save"
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            css_class = "form-select" if isinstance(field.widget,
-                                                    (forms.Select, forms.SelectMultiple)) else "form-control"
-            if isinstance(field.widget, forms.CheckboxInput):
-                css_class = "form-check-input"
-            field.widget.attrs["class"] = f'{field.widget.attrs.get("class", "")} {css_class}'.strip()
-
-        self.helper = FormHelper(self)
-        self.helper.form_method = "post"
-        self.helper.add_input(Submit("submit", self.submit_label, css_class="btn btn-primary"))
+from .models import Account, NextOfKin, Profile
 
 
-class AccountRegistrationForm(BootstrapFormMixin, UserCreationForm):
+class AccountRegistrationForm(UserCreationForm):
     """Sign-up form; relies on UserCreationForm for password validation and hashing."""
-
-    submit_label = "Create account"
 
     class Meta(UserCreationForm.Meta):
         model = Account
-        fields = ("username", "email", "national_id", "account_type", "user_type")
+        fields = (
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "national_id",
+            "account_type",
+            "user_type",
+        )
 
 
-class AccountUpdateForm(BootstrapFormMixin, forms.ModelForm):
+class AccountUpdateForm(forms.ModelForm):
     """Lets a customer edit their own non-sensitive account fields.
 
     Deliberately excludes national_id, cc_number, bank_balances and is_blocked —
     those are staff-managed and belong in the admin site, not self-service.
     """
 
-    submit_label = "Update account"
-
     class Meta:
         model = Account
         fields = ("username", "email", "account_type", "user_type")
 
 
-class ProfileUpdateForm(BootstrapFormMixin, forms.ModelForm):
-    submit_label = "Update profile"
-
+class ProfileUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper.form_enctype = "multipart/form-data"  # required for the profile_image field
+        self.fields["first_name"].required = True
+        self.fields["last_name"].required = True
 
     class Meta:
         model = Profile
@@ -65,13 +49,46 @@ class ProfileUpdateForm(BootstrapFormMixin, forms.ModelForm):
             "phone_number",
             "address",
             "city",
-            "zip_code",
+            "postal_code",
         )
+        labels = {"postal_code": "Postal code"}
 
 
-class CustomAuthenticationForm(BootstrapFormMixin, AuthenticationForm):
-    submit_label = "Log in"
+class NextOfKinForm(forms.ModelForm):
+    class Meta:
+        model = NextOfKin
+        fields = ("full_name", "relationship", "phone_number", "email")
 
+
+NextOfKinFormSet = inlineformset_factory(
+    Profile,
+    NextOfKin,
+    form=NextOfKinForm,
+    extra=1,
+    can_delete=True,
+)
+
+
+class AccountDeactivationForm(forms.Form):
+    password = forms.CharField(
+        label="Confirm your password",
+        strip=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "current-password"}),
+    )
+    confirm = forms.BooleanField(label="I understand my account will be deactivated")
+
+    def __init__(self, *args, user, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_password(self):
+        password = self.cleaned_data["password"]
+        if not self.user.check_password(password):
+            raise ValidationError("The password you entered is incorrect.")
+        return password
+
+
+class CustomAuthenticationForm(AuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['username'].label = "Email"
