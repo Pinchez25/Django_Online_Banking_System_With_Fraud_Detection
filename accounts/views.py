@@ -1,7 +1,7 @@
 import logging
 
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import (
     LoginView,
@@ -13,14 +13,18 @@ from django.contrib.auth.views import (
     PasswordResetDoneView,
     PasswordResetView,
 )
+from django.db import transaction
+from django.db.models import prefetch_related_objects
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, DeleteView, DetailView, UpdateView
+from django.views.generic import CreateView, DetailView, FormView, UpdateView
 
 from .forms import (
+    AccountDeactivationForm,
     AccountRegistrationForm,
     AccountUpdateForm,
     CustomAuthenticationForm,
+    NextOfKinFormSet,
     ProfileUpdateForm,
 )
 from .models import Account, Profile
@@ -81,7 +85,14 @@ class AccountProfileDetailView(LoginRequiredMixin, DetailView):
     context_object_name = "account"
 
     def get_object(self, queryset=None):
-        return Account.objects.select_related("profile").get(pk=self.request.user.pk)
+        account = self.request.user
+        prefetch_related_objects([account.profile], "next_of_kin")
+        return account
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["profile"] = self.object.profile
+        return context
 
 
 class AccountUpdateView(LoginRequiredMixin, UpdateView):
@@ -103,7 +114,7 @@ class AccountUpdateView(LoginRequiredMixin, UpdateView):
 
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
-    """Lets a customer edit their own profile, resizing any newly uploaded photo."""
+    """Updates a customer's profile and next-of-kin contacts together."""
 
     model = Profile
     form_class = ProfileUpdateForm
@@ -111,34 +122,63 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy("accounts:profile-detail")
 
     def get_object(self, queryset=None):
-        return Profile.objects.select_related("account").get(account_id=self.request.user.pk)
+        return self.request.user.profile
+
+    def get_formset(self):
+        return NextOfKinFormSet(
+            data=self.request.POST if self.request.method == "POST" else None,
+            instance=self.object,
+            prefix="next_of_kin",
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["is_profile_form"] = True
+        formset = getattr(self, "next_of_kin_formset", None)
+        context["next_of_kin_formset"] = formset if formset is not None else self.get_formset()
+        return context
 
     def form_valid(self, form):
-        response = super().form_valid(form)
+        formset = NextOfKinFormSet(
+            self.request.POST,
+            instance=form.instance,
+            prefix="next_of_kin",
+        )
+        if not formset.is_valid():
+            self.next_of_kin_formset = formset
+            return self.form_invalid(form)
+
+        with transaction.atomic():
+            self.object = form.save()
+            formset.instance = self.object
+            formset.save()
+
         logger.info("Profile %s updated fields: %s", self.object.pk, form.changed_data)
         if "profile_image" in form.changed_data and self.object.profile_image:
             process_profile_image(self.object.profile_image.path, 300, 300)
         messages.success(self.request, "Your profile has been updated.")
-        return response
+        return redirect(self.get_success_url())
 
 
-class AccountDeactivateView(LoginRequiredMixin, DeleteView):
-    """Deactivates rather than hard-deletes the account, preserving banking records."""
+class AccountDeactivateView(LoginRequiredMixin, FormView):
+    """Soft-deactivates an account after password confirmation."""
 
-    model = Account
+    form_class = AccountDeactivationForm
     template_name = "accounts/account_confirm_delete.html"
     success_url = reverse_lazy("accounts:login")
 
-    def get_object(self, queryset=None):
-        return self.request.user
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["user"] = self.request.user
+        return kwargs
 
     def form_valid(self, form):
-        account = self.get_object()
-        account.is_active = False
-        account.save(update_fields=["is_active"])
+        account = self.request.user
+        account.deactivate()
         logger.warning("Account deactivated: %s", account.pk)
+        logout(self.request)
         messages.info(self.request, "Your account has been deactivated.")
-        return redirect(self.success_url)
+        return super().form_valid(form)
 
 
 class AccountPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
