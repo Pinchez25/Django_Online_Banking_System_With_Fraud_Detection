@@ -1,30 +1,48 @@
-# from ..models import Profile, Account
-# from django.test import TestCase
-# from model_bakery import baker
-#
-#
-# class TestModels(TestCase):
-#     def setUp(self) -> None:
-#         # remember to take care of unique constraints
-#         # to avoid the UNIQUE constraint failed: accounts_profile.account_id error, let's do the following
-#         self.account = Account.objects.create(
-#             account_type="Savings",
-#             username="test",
-#             email="test@yahoo.com",
-#             cc_number="1234567890123456",
-#             national_id="22333456",
-#             bank_balances=1000,
-#             is_blocked=False,
-#
-#         )
-#         self.profile = baker.make(Profile, account=self.account,_quantity=1)
-#
-#     def test_account_model(self):
-#         self.assertEqual(self.account.__str__(), self.account.username)
-#
-#     def tearDown(self) -> None:
-#         del self.account
-#         del self.profile
-#
-#     def test_profile_model(self):
-#         self.assertEqual(self.profile.__str__(), self.profile.account.username)
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+
+from accounts.models import NextOfKin
+
+
+class NextOfKinModelTests(TestCase):
+    def setUp(self):
+        self.account = get_user_model().objects.create_user(
+            username="kin-customer",
+            email="kin-customer@example.com",
+            password="correct-password",
+            national_id=91234567,
+        )
+
+    def test_profile_can_have_multiple_next_of_kin(self):
+        first = NextOfKin.objects.create(
+            profile=self.account.profile,
+            full_name="Wanjiku Mwangi",
+            relationship="parent",
+            phone_number="+254700000001",
+        )
+        second = NextOfKin.objects.create(
+            profile=self.account.profile,
+            full_name="Kamau Mwangi",
+            relationship="sibling",
+            phone_number="+254700000002",
+        )
+
+        self.assertQuerySetEqual(
+            self.account.profile.next_of_kin.all(),
+            [first, second],
+        )
+
+    def test_deactivation_retains_account_profile_and_next_of_kin(self):
+        kin = NextOfKin.objects.create(
+            profile=self.account.profile,
+            full_name="Wanjiku Mwangi",
+            relationship="parent",
+            phone_number="+254700000001",
+        )
+
+        self.account.deactivate()
+        self.account.refresh_from_db()
+
+        self.assertFalse(self.account.is_active)
+        self.assertIsNotNone(self.account.deactivated_at)
+        self.assertTrue(self.account.profile.next_of_kin.filter(pk=kin.pk).exists())
