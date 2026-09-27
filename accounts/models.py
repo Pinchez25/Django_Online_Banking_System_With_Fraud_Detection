@@ -70,6 +70,9 @@ class Account(AbstractUser):
     def __str__(self):
         return self.username
 
+    def can_approve_transactions(self):
+        return self.is_active and (self.is_staff or self.has_perm("bank.approve_transaction"))
+
     def deactivate(self):
         self.is_active = False
         self.deactivated_at = self.deactivated_at or timezone.now()
