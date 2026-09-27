@@ -6,8 +6,8 @@ from django.conf import settings
 urlpatterns = [
     path('baton/', include('baton.urls')),
     path("admin/", admin.site.urls),
-    path("", include("bank.urls")),
-    path("accounts/", include("accounts.urls")),
+    path("", include("bank.urls", namespace="bank")),
+    path("accounts/", include("accounts.urls", namespace="accounts")),
 ]
 
 if settings.DEBUG:
