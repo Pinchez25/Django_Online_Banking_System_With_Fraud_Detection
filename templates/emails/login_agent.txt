@@ -1,0 +1,12 @@
+Hello {{ username }},
+
+You have just logged in to your Kwetu Bank account from a {{ device_type }} device.
+
+Operating system: {{ os }}
+Browser: {{ browser }}
+Time: {{ login_time }}
+
+If this was not you, please contact us immediately.
+
+Regards,
+Kwetu Bank
