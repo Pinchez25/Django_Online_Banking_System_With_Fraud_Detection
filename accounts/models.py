@@ -4,6 +4,7 @@ from creditcards.models import CardNumberField
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 USER_TYPES = (
@@ -58,6 +59,7 @@ class Account(AbstractUser):
         default=0,
     )
     is_blocked = models.BooleanField(_("Blocked"), default=False)
+    deactivated_at = models.DateTimeField(null=True, blank=True, editable=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
@@ -68,6 +70,11 @@ class Account(AbstractUser):
     def __str__(self):
         return self.username
 
+    def deactivate(self):
+        self.is_active = False
+        self.deactivated_at = self.deactivated_at or timezone.now()
+        self.save(update_fields=["is_active", "deactivated_at"])
+
 
 class Profile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -76,8 +83,8 @@ class Profile(models.Model):
         on_delete=models.CASCADE,
         related_name="profile",
     )
-    first_name = models.CharField(_("First Name"), max_length=50)
-    last_name = models.CharField(_("Last Name"), max_length=50)
+    first_name = models.CharField(_("First Name"), max_length=50, blank=True, default="")
+    last_name = models.CharField(_("Last Name"), max_length=50, blank=True, default="")
     profile_image = models.ImageField(
         _("Image"),
         null=True,
@@ -88,7 +95,7 @@ class Profile(models.Model):
     phone_number = models.CharField(_("Phone Number"), max_length=50, null=True, blank=True)
     address = models.CharField(_("Address"), max_length=50, null=True, blank=True)
     city = models.CharField(_("City"), max_length=50, null=True, blank=True)
-    zip_code = models.CharField(_("Zip Code"), max_length=50, null=True, blank=True)
+    postal_code = models.CharField(_("Postal Code"), max_length=50, null=True, blank=True)
     created = models.DateTimeField(_("Created"), auto_now_add=True)
     updated = models.DateTimeField(_("Updated"), auto_now=True)
 
@@ -101,3 +108,28 @@ class Profile(models.Model):
     class Meta:
         db_table = "profile"
         ordering = ["-created"]
+
+
+class NextOfKin(models.Model):
+    RELATIONSHIP_CHOICES = (
+        ("parent", _("Parent")),
+        ("spouse", _("Spouse")),
+        ("child", _("Child")),
+        ("sibling", _("Sibling")),
+        ("other", _("Other")),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="next_of_kin")
+    full_name = models.CharField(_("Full Name"), max_length=100)
+    relationship = models.CharField(_("Relationship"), max_length=20, choices=RELATIONSHIP_CHOICES)
+    phone_number = models.CharField(_("Phone Number"), max_length=50)
+    email = models.EmailField(_("Email"), blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["created", "id"]
+
+    def __str__(self):
+        return f"{self.full_name} ({self.get_relationship_display()})"
