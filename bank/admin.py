@@ -1,5 +1,14 @@
 from django.contrib import admin
-from .models import Transaction, TransactionLog
+from .models import Notification, Transaction, TransactionLog
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ("title", "recipient", "kind", "level", "created_at", "read_at")
+    list_filter = ("kind", "level", "created_at")
+    search_fields = ("title", "body", "recipient__username", "recipient__email")
+    readonly_fields = ("created_at", "read_at")
+    list_select_related = ("recipient",)
 
 
 @admin.register(Transaction)
