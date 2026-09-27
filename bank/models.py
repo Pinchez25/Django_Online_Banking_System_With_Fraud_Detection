@@ -98,3 +98,40 @@ class TransactionLog(models.Model):
 
     def __str__(self):
         return str(self.pk)
+
+
+class Notification(models.Model):
+    class Kind(models.TextChoices):
+        ALERT = "alert", _("Alert")
+        MESSAGE = "message", _("Message")
+
+    class Level(models.TextChoices):
+        INFO = "info", _("Information")
+        SUCCESS = "success", _("Success")
+        WARNING = "warning", _("Warning")
+        DANGER = "danger", _("Urgent")
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+    kind = models.CharField(max_length=10, choices=Kind.choices)
+    level = models.CharField(max_length=10, choices=Level.choices, default=Level.INFO)
+    sender_name = models.CharField(max_length=100, blank=True, default="Kwetu Bank")
+    title = models.CharField(max_length=120)
+    body = models.TextField(max_length=2000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(
+                fields=["recipient", "kind", "read_at", "-created_at"],
+                name="notif_user_kind_read_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.get_kind_display()}: {self.title}"
