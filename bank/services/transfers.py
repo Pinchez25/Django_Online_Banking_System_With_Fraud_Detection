@@ -4,12 +4,14 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.db import transaction
 
 from .fraud import FraudService
 from ..ml.detector import FraudModelUnavailable
 from ..models import Transaction, TransactionLog
+from .notifications import create_alert
 
 
 class TransferError(Exception):
@@ -57,7 +59,7 @@ class TransferService:
         # different orders and unnecessarily deadlocking.
         with transaction.atomic():
             locked_accounts = (
-                type(sender).objects.select_for_update()
+                get_user_model().objects.select_for_update()
                 .filter(pk__in=[sender.pk, receiver.pk])
                 .order_by("pk")
             )
@@ -94,6 +96,12 @@ class TransferService:
             if fraud.is_fraud:
                 payor.is_blocked = True
                 payor.save(update_fields=["is_blocked"])
+                create_alert(
+                    recipient=payor,
+                    title="Transfer blocked",
+                    body="We blocked a transfer and temporarily restricted outgoing payments. Contact support if you do not recognize this activity.",
+                    level="danger",
+                )
                 self._schedule_fraud_alert(payor.email, fraud.probability)
                 result = TransferResult(
                     transaction=None,
@@ -110,6 +118,18 @@ class TransferService:
                     account=payor,
                     type="T",
                     amount=amount,
+                )
+                create_alert(
+                    recipient=payor,
+                    title="Transfer sent",
+                    body=f"KES {amount:,.2f} was sent to {beneficiary.username}.",
+                    level="success",
+                )
+                create_alert(
+                    recipient=beneficiary,
+                    title="Transfer received",
+                    body=f"KES {amount:,.2f} was received from {payor.username}.",
+                    level="success",
                 )
                 result = TransferResult(
                     transaction=transfer,
