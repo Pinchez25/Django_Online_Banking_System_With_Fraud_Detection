@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def create_profile(sender, instance, created, **kwargs):
     """Provisions a Profile the moment a new Account is created.
 
-    Runs for every Account creation path — the registration view, the admin,
+    Runs for every Account creation path — the accounts view, the admin,
     createsuperuser, the shell — not just the one form this app ships.
     get_or_create rather than create as a defensive no-op if a Profile
     somehow already exists (e.g. a fixture load), rather than raising.
