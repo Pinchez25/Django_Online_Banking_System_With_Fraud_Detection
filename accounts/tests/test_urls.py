@@ -14,7 +14,7 @@ class UrlTest(TestCase):
         self.assertEqual(resolve(url).func.view_class.__name__, "AccountLoginView")
 
     def test_logout_page(self):
-        response = self.client.get(reverse('accounts:logout'))
+        response = self.client.post(reverse('accounts:logout'))
         self.assertEqual(response.status_code, 302)
 
     def test_register_page(self):
@@ -26,7 +26,7 @@ class UrlTest(TestCase):
         self.assertEqual(resolve(url).func.view_class.__name__, "AccountRegisterView")
 
     def test_account_locked_page(self):
-        response = self.client.get('/accounts/account-locked/')
+        response = self.client.get('/accounts/account-blocked/')
         self.assertEqual(response.status_code, 200)
 
     def test_account_blocked_page(self):
