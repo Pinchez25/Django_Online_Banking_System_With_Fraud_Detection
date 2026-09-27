@@ -66,12 +66,22 @@ class Account(AbstractUser):
 
     class Meta:
         db_table = "auth_user"
+        constraints = [
+            models.CheckConstraint(
+                name="account_bank_balances_non_negative",
+                condition=models.Q(bank_balances__gte=0),
+            ),
+        ]
 
     def __str__(self):
         return self.username
 
     def can_approve_transactions(self):
-        return self.is_active and (self.is_staff or self.has_perm("bank.approve_transaction"))
+        return (
+            self.is_active
+            and not self.is_blocked
+            and (self.is_staff or self.has_perm("bank.approve_transaction"))
+        )
 
     def deactivate(self):
         self.is_active = False
