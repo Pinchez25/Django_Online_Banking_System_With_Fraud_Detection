@@ -12,24 +12,35 @@ from bank.ml.detector import FraudResult
 
 class TestBankViews(TestCase):
     def test_send_money_page(self):
-        response = self.client.get(reverse('send-money'))
+        response = self.client.get(reverse('bank:send-money'))
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, '/accounts/login/?next=/send/')
 
     def test_deposit_money_page(self):
-        response = self.client.get(reverse('deposit-money'))
+        response = self.client.get(reverse('bank:deposit-money'))
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, '/accounts/login/?next=/deposit/')
 
     def test_withdraw_money_page(self):
-        response = self.client.get(reverse('withdraw-money'))
+        response = self.client.get(reverse('bank:withdraw-money'))
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, '/accounts/login/?next=/withdraw/')
 
     def test_dashboard_page(self):
-        response = self.client.get(reverse('dashboard'))
+        response = self.client.get(reverse('bank:dashboard'))
         self.assertEqual(response.status_code, 302)
         self.assertRedirects(response, '/accounts/login/?next=/')
+
+    def test_dashboard_context_data(self):
+        account = get_user_model().objects.create_user(
+            username='dashboarduser', password='password123', email='dash@example.com', national_id=30001,
+        )
+        self.client.force_login(account)
+        response = self.client.get(reverse('bank:dashboard'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('summary', response.context)
+        self.assertIn('transactions', response.context)
+        self.assertIn('cards', response.context)
 
     def test_deposit_updates_balance_and_records_transaction(self):
         account = get_user_model().objects.create_user(
@@ -38,10 +49,10 @@ class TestBankViews(TestCase):
         )
         self.client.force_login(account)
 
-        response = self.client.post(reverse('deposit-money'), {'type': 'D', 'amount': '25.00'})
+        response = self.client.post(reverse('bank:deposit-money'), {'type': 'D', 'amount': '25.00'})
 
         account.refresh_from_db()
-        self.assertRedirects(response, '/')
+        self.assertRedirects(response, reverse('bank:dashboard'))
         self.assertEqual(account.bank_balances, 125)
         self.assertEqual(Transaction.objects.filter(account=account, type='D').count(), 1)
 
@@ -52,10 +63,10 @@ class TestBankViews(TestCase):
         )
         self.client.force_login(account)
 
-        response = self.client.post(reverse('withdraw-money'), {'type': 'W', 'amount': '25.00'})
+        response = self.client.post(reverse('bank:withdraw-money'), {'type': 'W', 'amount': '25.00'})
 
         account.refresh_from_db()
-        self.assertRedirects(response, '/')
+        self.assertRedirects(response, reverse('bank:dashboard'))
         self.assertEqual(account.bank_balances, 75)
         self.assertEqual(Transaction.objects.filter(account=account, type='W').count(), 1)
 
@@ -82,7 +93,7 @@ class TestBankViews(TestCase):
         self.client.force_login(sender)
 
         with self.captureOnCommitCallbacks(execute=True):
-            response = self.client.post(reverse('send-money'), {
+            response = self.client.post(reverse('bank:send-money'), {
                 'type': 'T',
                 'amount': '25.00',
                 'recipient': str(recipient.cc_number),
@@ -110,7 +121,7 @@ class TestBankViews(TestCase):
         )
         self.client.force_login(sender)
 
-        response = self.client.post(reverse('send-money'), {
+        response = self.client.post(reverse('bank:send-money'), {
             'type': 'T',
             'amount': '25.00',
             'recipient': str(recipient.cc_number),
