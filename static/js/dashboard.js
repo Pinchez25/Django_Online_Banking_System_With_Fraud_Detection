@@ -97,24 +97,14 @@ function wireModals() {
     });
 }
 
-// Demo-only: shows a success message instead of hitting a real endpoint.
+// Keep the existing client-side interaction, but allow real form submissions to proceed normally.
 function wireMockForms() {
     document.querySelectorAll('[data-mock-submit]').forEach((form) => {
         form.addEventListener('submit', (event) => {
-            event.preventDefault();
-            let success = form.querySelector('.modal__success');
-            if (!success) {
-                success = document.createElement('p');
-                success.className = 'modal__success';
-                form.prepend(success);
+            const modal = form.closest('.modal');
+            if (modal) {
+                modal.hidden = true;
             }
-            success.textContent = form.dataset.successMessage || 'Request received.';
-            setTimeout(() => {
-                const modal = form.closest('.modal');
-                if (modal) modal.hidden = true;
-                success.remove();
-                form.reset();
-            }, 1400);
         });
     });
 }

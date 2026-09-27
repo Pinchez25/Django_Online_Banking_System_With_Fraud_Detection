@@ -5,32 +5,11 @@
             <h2 id="payBillModalTitle">Pay a bill</h2>
             <button class="modal__close" data-modal-close aria-label="Close">&times;</button>
         </div>
-
-        <form class="modal__form" data-mock-submit data-success-message="Bill payment request received.">
-            <label class="field">
-                <span>Biller</span>
-                <select name="biller">
-                    <option>Kenya Power (KPLC)</option>
-                    <option>Nairobi Water</option>
-                    <option>DSTV</option>
-                    <option>Safaricom postpaid</option>
-                </select>
-            </label>
-            <label class="field">
-                <span>Account / meter number</span>
-                <input type="text" name="biller_account" placeholder="e.g. 33021147" required>
-            </label>
-            <label class="field">
-                <span>Amount (KES)</span>
-                <input type="number" name="amount" min="1" step="0.01" placeholder="0.00" required>
-            </label>
-
-            <p class="field__hint">This is a demo form using placeholder data — no funds will move.</p>
-
+        <div class="modal__form">
+            <p class="field__hint">Bill payment is not yet enabled in this build. Use the deposit, withdrawal, and transfer actions for active banking activity.</p>
             <div class="modal__actions">
-                <button type="button" class="btn btn--ghost" data-modal-close>Cancel</button>
-                <button type="submit" class="btn btn--primary">Pay bill</button>
+                <button type="button" class="btn btn--primary" data-modal-close>Close</button>
             </div>
-        </form>
+        </div>
     </div>
 </div>

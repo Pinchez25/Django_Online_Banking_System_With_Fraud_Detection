@@ -10,37 +10,18 @@ kind is one of: send, deposit, withdraw
             <button class="modal__close" data-modal-close aria-label="Close">&times;</button>
         </div>
 
-        <form class="modal__form" data-mock-submit data-success-message="{{ title }} request received.">
+        {% if kind == "send" %}
+            <form class="modal__form" method="post" action="{% url 'bank:send-money' %}">
+        {% elif kind == "deposit" %}
+            <form class="modal__form" method="post" action="{% url 'bank:deposit-money' %}">
+        {% else %}
+            <form class="modal__form" method="post" action="{% url 'bank:withdraw-money' %}">
+        {% endif %}
+            {% csrf_token %}
             {% if kind == "send" %}
                 <label class="field">
-                    <span>Recipient account or phone</span>
-                    <input type="text" name="recipient" placeholder="e.g. 0722 000 000" required>
-                </label>
-                <label class="field">
-                    <span>Recipient bank</span>
-                    <select name="bank">
-                        <option>Jumla Bank (internal)</option>
-                        <option>M-Pesa</option>
-                        <option>Other Kenyan bank</option>
-                    </select>
-                </label>
-            {% elif kind == "deposit" %}
-                <label class="field">
-                    <span>Deposit method</span>
-                    <select name="method">
-                        <option>Agent till</option>
-                        <option>M-Pesa</option>
-                        <option>Cheque</option>
-                    </select>
-                </label>
-            {% elif kind == "withdraw" %}
-                <label class="field">
-                    <span>Withdraw to</span>
-                    <select name="destination">
-                        <option>ATM code (no card)</option>
-                        <option>Agent till</option>
-                        <option>M-Pesa</option>
-                    </select>
+                    <span>Recipient credit card</span>
+                    <input type="text" name="recipient" placeholder="Enter the recipient credit card number" required>
                 </label>
             {% endif %}
 
@@ -49,12 +30,11 @@ kind is one of: send, deposit, withdraw
                 <input type="number" name="amount" min="1" step="0.01" placeholder="0.00" required>
             </label>
 
-            <label class="field">
-                <span>Note <em>(optional)</em></span>
-                <input type="text" name="note" maxlength="60" placeholder="What's this for?">
-            </label>
-
-            <p class="field__hint">This is a demo form using placeholder data — no funds will move.</p>
+            {% if kind == "send" %}
+                <p class="field__hint">Transfers are screened for fraud before approval or processing.</p>
+            {% else %}
+                <p class="field__hint">This request is submitted for bank approval before any balance change is applied.</p>
+            {% endif %}
 
             <div class="modal__actions">
                 <button type="button" class="btn btn--ghost" data-modal-close>Cancel</button>
