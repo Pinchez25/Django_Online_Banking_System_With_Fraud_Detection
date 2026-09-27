@@ -1,119 +1,186 @@
+import logging
+
 from django.contrib import messages
-from django.contrib.auth import login, authenticate, logout, get_user_model
+from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import render, redirect
+from django.contrib.auth.views import (
+    LoginView,
+    LogoutView,
+    PasswordChangeDoneView,
+    PasswordChangeView,
+    PasswordResetCompleteView,
+    PasswordResetConfirmView,
+    PasswordResetDoneView,
+    PasswordResetView,
+)
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from django.views.generic import FormView
-from django.views.generic.detail import DetailView
-from django.views.generic.edit import UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, UpdateView
 
-from .forms import AccountCreationForm, LoginForm, ProfileCreationForm
-from .models import Profile
-from .utils import login_agent
+from .forms import (
+    AccountRegistrationForm,
+    AccountUpdateForm,
+    CustomAuthenticationForm,
+    ProfileUpdateForm,
+)
+from .models import Account, Profile
+from .utils import get_login_agent, process_profile_image
+
+logger = logging.getLogger(__name__)
 
 
-class UserRegistrationView(FormView):
-    template_name = 'accounts/bank_account_creation.html'
-    form_class = AccountCreationForm
+class AccountRegisterView(CreateView):
+    """Signs a customer up. Profile creation is handled by the post_save
+    signal in signals.py, not here — see AccountsConfig.ready()."""
+
+    model = Account
+    form_class = AccountRegistrationForm
+    template_name = "registration/register.html"
+    success_url = reverse_lazy("accounts:profile-detail")
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        login(self.request, self.object)
+        logger.info("New account registered: %s", self.object.pk)
+        messages.success(self.request, f"Welcome, {self.object.email} — your account is ready.")
+        return response
+
+
+class AccountLoginView(LoginView):
+    template_name = "registration/login.html"
+    authentication_form = CustomAuthenticationForm
     redirect_authenticated_user = True
 
     def form_valid(self, form):
-        user = form.save()
-        if user is not None:
-            login(self.request, user,  backend='django.contrib.auth.backends.ModelBackend')
-            messages.success(self.request, 'Account created successfully')
-        return super(UserRegistrationView, self).form_valid(form)
+        response = super().form_valid(form)
+        logger.info("Account logged in: %s", self.request.user.pk)
+        get_login_agent(self.request)
+        messages.success(self.request, f"Welcome back, {self.request.user.email}.")
+        return response
 
     def form_invalid(self, form):
-        # if there are errors in the form, render the form with errors
-        return render(self.request, self.template_name, {'register_form': form})
-
-    def get_success_url(self):
-        return reverse_lazy('update-profile', kwargs={'pk': self.request.user.pk})
-
-    # def get(self, *args, **kwargs):
-    #     if self.request.user.is_authenticated:
-    #         return redirect('dashboard')
-    #     return super(UserRegistrationView, self).get(*args, **kwargs)
+        logger.warning("Failed login attempt for email: %s", form.cleaned_data.get("username", "unknown"))
+        return super().form_invalid(form)
 
 
-def account_blocked(request):
-    return render(request, 'accounts/account_blocked.html')
+class AccountLogoutView(LogoutView):
+    next_page = reverse_lazy("accounts:login")
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            logger.info("Account logged out: %s", request.user.pk)
+            messages.info(request, "You have been logged out.")
+        return super().dispatch(request, *args, **kwargs)
 
 
-def user_login(request):
-    # if user is already logged in, redirect to dashboard
-    if request.user.is_authenticated:
-        return redirect('dashboard')
+class AccountProfileDetailView(LoginRequiredMixin, DetailView):
+    """Read-only view of the logged-in customer's account and profile, in a single query."""
 
-    if request.method == 'POST':
-        form = LoginForm(request.POST)
-        if form.is_valid():
-            email = form.cleaned_data.get('email')
-            password = form.cleaned_data.get('password')
-            try:
-                username = get_user_model().objects.get(email=email).username
-                user = authenticate(request, username=username, password=password)
+    model = Account
+    template_name = "profile.html"
+    context_object_name = "account"
 
-                if user is not None and not user.is_blocked:
-                    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                    login_agent.get_login_agent(request)
-                    messages.success(request, 'Login success')
-                    return redirect(request.GET.get('next') if 'next' in request.GET else 'dashboard')
-
-                elif user.is_blocked:
-                    return redirect('account-blocked')
-                else:
-                    messages.error(request, 'Invalid email or password')
-
-                    return redirect('login')
-            except get_user_model().DoesNotExist:
-                messages.error(request, "Invalid user and/or password")
-                return redirect('login')
-
-    else:
-        form = LoginForm()
-    return render(request, 'accounts/login.html', {'form': form})
+    def get_object(self, queryset=None):
+        return Account.objects.select_related("profile").get(pk=self.request.user.pk)
 
 
-def logout_user(request):
-    logout(request)
-    return redirect('login')
+class AccountUpdateView(LoginRequiredMixin, UpdateView):
+    """Lets a customer edit their own account fields (username, email, account/user type)."""
 
+    model = Account
+    form_class = AccountUpdateForm
+    template_name = "profile_form.html"
+    success_url = reverse_lazy("accounts:profile-detail")
 
-def account_locked(request):
-    return render(request, 'account_locked.html')
-
-
-class ProfileView(LoginRequiredMixin, DetailView):
-    model = Profile
-    context_object_name = 'profile'
-    template_name = 'accounts/profile.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(ProfileView, self).get_context_data()
-        context['account_id'] = context['profile'].account.id
-
-        return context
-
-
-class UpdateProfile(LoginRequiredMixin, UpdateView):
-    model = Profile
-    form_class = ProfileCreationForm
-    template_name = 'accounts/update_profile.html'
-
-    def get_success_url(self):
-        return reverse_lazy('profile', kwargs={'pk': self.request.user.profile.id})
+    def get_object(self, queryset=None):
+        return self.request.user
 
     def form_valid(self, form):
-        profile_ = form.save(commit=False)
-        profile_.account = self.request.user
-        profile_.save()
-        messages.success(self.request, 'Profile updated successfully')
-        return super(UpdateProfile, self).form_valid(form)
+        response = super().form_valid(form)
+        logger.info("Account %s updated fields: %s", self.object.pk, form.changed_data)
+        messages.success(self.request, "Your account details have been updated.")
+        return response
 
-    def get_context_data(self, **kwargs):
-        context = super(UpdateProfile, self).get_context_data()
-        context['account'] = context['profile'].account
 
-        return context
+class ProfileUpdateView(LoginRequiredMixin, UpdateView):
+    """Lets a customer edit their own profile, resizing any newly uploaded photo."""
+
+    model = Profile
+    form_class = ProfileUpdateForm
+    template_name = "profile_form.html"
+    success_url = reverse_lazy("accounts:profile-detail")
+
+    def get_object(self, queryset=None):
+        return Profile.objects.select_related("account").get(account_id=self.request.user.pk)
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        logger.info("Profile %s updated fields: %s", self.object.pk, form.changed_data)
+        if "profile_image" in form.changed_data and self.object.profile_image:
+            process_profile_image(self.object.profile_image.path, 300, 300)
+        messages.success(self.request, "Your profile has been updated.")
+        return response
+
+
+class AccountDeactivateView(LoginRequiredMixin, DeleteView):
+    """Deactivates rather than hard-deletes the account, preserving banking records."""
+
+    model = Account
+    template_name = "accounts/account_confirm_delete.html"
+    success_url = reverse_lazy("accounts:login")
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def form_valid(self, form):
+        account = self.get_object()
+        account.is_active = False
+        account.save(update_fields=["is_active"])
+        logger.warning("Account deactivated: %s", account.pk)
+        messages.info(self.request, "Your account has been deactivated.")
+        return redirect(self.success_url)
+
+
+class AccountPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
+    template_name = "registration/password_change_form.html"
+    success_url = reverse_lazy("accounts:password-change-done")
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        logger.info("Password changed for account: %s", self.request.user.pk)
+        messages.success(self.request, "Your password has been changed.")
+        return response
+
+
+class AccountPasswordChangeDoneView(LoginRequiredMixin, PasswordChangeDoneView):
+    template_name = "registration/password_change_done.html"
+
+
+class AccountPasswordResetView(PasswordResetView):
+    template_name = "registration/password_reset_form.html"
+    email_template_name = "accounts/emails/password_reset_email.txt"
+    html_email_template_name = "accounts/emails/password_reset_email.html"
+    subject_template_name = "accounts/emails/password_reset_subject.txt"
+    success_url = reverse_lazy("accounts:password-reset-done")
+
+    def form_valid(self, form):
+        logger.info("Password reset requested for email domain: %s", form.cleaned_data["email"].split("@")[-1])
+        return super().form_valid(form)
+
+
+class AccountPasswordResetDoneView(PasswordResetDoneView):
+    template_name = "registration/password_reset_done.html"
+
+
+class AccountPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = "registration/password_reset_confirm.html"
+    success_url = reverse_lazy("accounts:password-reset-complete")
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        logger.info("Password reset completed for account: %s", form.user.pk)
+        return response
+
+
+class AccountPasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = "registration/password_reset_complete.html"
