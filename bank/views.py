@@ -23,13 +23,7 @@ class HomeView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = self.request.user
-        context.update(
-            year=timezone.now().year,
-            user_profile_id=user.profile.id,
-            user_profile=user.profile,
-            user_transactions=user.transactions.all(),
-        )
+        context.update(_dashboard_context(self.request))
         return context
 
 
@@ -135,115 +129,85 @@ class SendMoneyView(CreateTransactionMixin):
         return super().form_invalid(form)
 
 
-# Update these later
 
-SUMMARY = {
-    "total_balance": "482,650.00",
-    "balance_change": "2.4%",
-    "account_number": "0112 4483 6621",
-    "account_type": "Premium current account",
-    "savings_total": "156,200.00",
-    "savings_goal": "3 active goals",
-    "loans_total": "64,000.00",
-    "loan_due": "3 Oct 2026",
-    "national_id": "3xxxxx78",
-}
+def get_dashboard_data(user):
+    # Placeholder implementation
+    profile = getattr(user, 'profile', None)
+    
+    if profile and profile.first_name and profile.last_name:
+        initials = f"{profile.first_name[0]}{profile.last_name[0]}"
+    elif profile and profile.first_name:
+        initials = f"{profile.first_name[0]}"
+    elif profile and profile.last_name:
+        initials = f"{profile.last_name[0]}"
+    elif user.username:
+        initials = user.username[0]
+    else:
+        initials = "?"
 
-USER = {
-    "first_name": "Amina",
-    "full_name": "Amina Wanjiru",
-    "initials": "AW",
-    "tier": "Gold member",
-}
-
-ALERTS = [
-    {"title": "Unusual login detected", "detail": "New device in Nairobi", "time": "10m ago", "level": "warning"},
-    {"title": "Loan instalment due soon", "detail": "KES 8,200 due 3 Oct", "time": "2h ago", "level": "info"},
-    {"title": "Card frozen", "detail": "Virtual card ending 4471", "time": "1d ago", "level": "danger"},
-]
-
-MESSAGES = [
-    {"sender": "Jumla Support", "preview": "Your dispute #JB-2291 has been resolved.", "time": "1h ago"},
-    {"sender": "Relationship Manager", "preview": "Let's review your savings plan this week.", "time": "Yesterday"},
-]
-
-TRANSACTIONS = [
-    {"date": "26 Sep 2026", "description": "Java House - Westlands", "reference": "TXN882014", "type": "purchase", "amount": "1,240.00", "direction": "debit", "status": "completed"},
-    {"date": "25 Sep 2026", "description": "Salary - Cloudoon Ltd", "reference": "TXN881972", "type": "transfer", "amount": "145,000.00", "direction": "credit", "status": "completed"},
-    {"date": "24 Sep 2026", "description": "KPLC token purchase", "reference": "TXN881840", "type": "bill", "amount": "2,000.00", "direction": "debit", "status": "completed"},
-    {"date": "23 Sep 2026", "description": "Transfer to John Mwangi", "reference": "TXN881602", "type": "transfer", "amount": "5,500.00", "direction": "debit", "status": "completed"},
-    {"date": "21 Sep 2026", "description": "Loan instalment", "reference": "TXN881190", "type": "loan", "amount": "8,200.00", "direction": "debit", "status": "pending"},
-    {"date": "19 Sep 2026", "description": "Naivas Supermarket", "reference": "TXN880933", "type": "purchase", "amount": "3,860.50", "direction": "debit", "status": "completed"},
-    {"date": "17 Sep 2026", "description": "M-Pesa deposit", "reference": "TXN880711", "type": "deposit", "amount": "10,000.00", "direction": "credit", "status": "completed"},
-    {"date": "14 Sep 2026", "description": "DSTV subscription", "reference": "TXN880402", "type": "bill", "amount": "3,200.00", "direction": "debit", "status": "failed"},
-]
-
-CARDS = [
-    {"scheme": "visa", "masked_number": "4521 •••• •••• 8890", "holder": "Amina Wanjiru", "expiry": "09/29"},
-    {"scheme": "mastercard", "masked_number": "5412 •••• •••• 4471", "holder": "Amina Wanjiru", "expiry": "02/28"},
-]
-
-SPENDING = {
-    "total": "58,420",
-    "categories": [
-        {"name": "Groceries", "percent": 32, "colour": "#1F6F50"},
-        {"name": "Bills & utilities", "percent": 24, "colour": "#C99A3B"},
-        {"name": "Transport", "percent": 18, "colour": "#3C7A64"},
-        {"name": "Dining out", "percent": 14, "colour": "#B3402A"},
-        {"name": "Other", "percent": 12, "colour": "#8C8672"},
-    ],
-}
-
-BENEFICIARIES = [
-    {"name": "John Mwangi", "bank": "Jumla Bank", "masked_account": "••••6621"},
-    {"name": "Grace Achieng", "bank": "KCB", "masked_account": "••••1187"},
-    {"name": "Peter Otieno", "bank": "Equity Bank", "masked_account": "••••9043"},
-]
-
-
-PROFILE = {
-    "first_name": "Amina",
-    "last_name": "Wanjiru",
-    "full_name": "Amina Wanjiru",
-    "initials": "AW",
-    "email": "amina.wanjiru@example.com",
-    "phone": "+254 722 000 000",
-    "national_id": "30021147",
-    "date_of_birth": "14 May 1994",
-    "date_of_birth_iso": "1994-05-14",
-    "occupation": "Software developer",
-    "address": "Kilimani, Nairobi",
-    "next_of_kin": "John Wanjiru",
-    "member_since": "2022",
-}
-
-NOTIFICATION_SETTINGS = [
-    {"label": "Transaction alerts", "hint": "Get notified for every debit or credit", "enabled": True},
-    {"label": "Low balance warnings", "hint": "Alert when balance drops below KES 5,000", "enabled": True},
-    {"label": "Marketing emails", "hint": "Product news, offers and surveys", "enabled": False},
-    {"label": "SMS notifications", "hint": "Mirror alerts to your registered phone number", "enabled": True},
-]
-
-SECURITY = {
-    "password_changed": "14 Aug 2026",
-    "two_factor_enabled": True,
-    "biometric_enabled": False,
-    "sessions": [
-        {"device": "iPhone 15 · Jumla app", "location": "Nairobi, KE", "last_active": "Active now", "is_current": True},
-        {"device": "Chrome on Windows", "location": "Nairobi, KE", "last_active": "2 days ago", "is_current": False},
-    ],
-}
-
-PREFERENCES = {"currency": "KES", "language": "English", "statement_delivery": "Email"}
+    return {
+        "summary": {
+            "total_balance": str(user.bank_balances),
+            "balance_change": "0%",
+            "account_number": "N/A",
+            "account_type": "Personal account",
+            "savings_total": "0.00",
+            "savings_goal": "0 active goals",
+            "loans_total": "0.00",
+            "loan_due": "N/A",
+            "national_id": str(user.national_id),
+        },
+        "user_data": {
+            "first_name": profile.first_name if profile and profile.first_name else user.username,
+            "full_name": f"{profile.first_name} {profile.last_name}" if profile and (profile.first_name or profile.last_name) else user.username,
+            "initials": initials,
+            "tier": "Standard",
+        },
+        "alerts": [],
+        "messages_list": [],
+        "transactions": user.transactions.all(),
+        "cards": [],
+        "spending": {
+            "total": "0",
+            "categories": [],
+        },
+        "beneficiaries": [],
+        "profile": {
+            "first_name": profile.first_name if profile else "",
+            "last_name": profile.last_name if profile else "",
+            "email": user.email,
+        },
+        "notification_settings": [
+            {"label": "Transaction alerts", "hint": "Get notified for every debit or credit", "enabled": True},
+            {"label": "Low balance warnings", "hint": "Alert when balance drops below KES 5,000", "enabled": True},
+            {"label": "Marketing emails", "hint": "Product news, offers and surveys", "enabled": False},
+            {"label": "SMS notifications", "hint": "Mirror alerts to your registered phone number", "enabled": True},
+        ],
+        "security": {
+            "password_changed": "N/A",
+            "two_factor_enabled": False,
+            "biometric_enabled": False,
+        },
+        "preferences": {"currency": "KES", "language": "English", "statement_delivery": "Email"},
+    }
 
 def _dashboard_context(request, **extra):
+    user_data = get_dashboard_data(request.user)
     context = {
-        "summary": SUMMARY,
-        "user_data": USER,
-        "alerts": ALERTS,
-        "messages_list": MESSAGES,
-        "current_year": 2026,
-        "today": "Sunday, 27 September 2026",
+        "summary": user_data["summary"],
+        "user_data": user_data["user_data"],
+        "alerts": user_data["alerts"],
+        "messages_list": user_data["messages_list"],
+        "transactions": user_data["transactions"],
+        "cards": user_data["cards"],
+        "spending": user_data["spending"],
+        "beneficiaries": user_data["beneficiaries"],
+        "profile": user_data["profile"],
+        "current_year": timezone.now().year,
+        "today": timezone.now().strftime("%A, %d %B %Y"),
+        "notification_settings": user_data["notification_settings"],
+        "security": user_data["security"],
+        "preferences": user_data["preferences"],
     }
     context.update(extra)
     return context
@@ -253,10 +217,5 @@ def settings_view(request):
     if request.method == "POST":
         messages.success(request, "Your preferences have been saved.")
         return redirect("settings")
-    context = _dashboard_context(
-        request,
-        notification_settings=NOTIFICATION_SETTINGS,
-        security=SECURITY,
-        preferences=PREFERENCES,
-    )
+    context = _dashboard_context(request)
     return render(request, "settings.html", context)
