@@ -12,7 +12,7 @@ class UrlTest(TestCase):
     def test_login_url_resolves_login_view(self):
         url = reverse('login')
         # print(resolve(url))
-        self.assertEquals(resolve(url).func, login)
+        self.assertEqual(resolve(url).func, login)
 
     def test_logout_page(self):
         response = self.client.get('/accounts/logout/')
@@ -26,7 +26,7 @@ class UrlTest(TestCase):
     def test_register_url_resolves_register_view(self):
         url = reverse('register')
         # print(resolve(url))
-        self.assertEquals(resolve(url).func.view_class, UserRegistrationView)
+        self.assertEqual(resolve(url).func.view_class, UserRegistrationView)
 
     def test_account_locked_page(self):
         response = self.client.get('/accounts/account-locked/')
@@ -49,7 +49,7 @@ class UrlTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_profile_page(self):
-        response = self.client.get('/accounts/1/1-profile/')
+        response = self.client.get(reverse('profile', kwargs={'pk': 1}))
         self.assertEqual(response.status_code, 302)
 
     def test_update_profile_page(self):
