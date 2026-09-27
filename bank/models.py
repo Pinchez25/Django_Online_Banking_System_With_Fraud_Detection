@@ -96,7 +96,7 @@ class Transaction(models.Model):
         if self.status != self.Status.PENDING:
             raise ValueError("Only pending transactions can be approved.")
 
-        if approved_by is not None and not approved_by.has_perm("bank.approve_transaction"):
+        if approved_by is not None and not approved_by.can_approve_transactions():
             raise PermissionDenied("This user is not allowed to approve transactions.")
 
         account = self.account
