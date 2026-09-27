@@ -1,4 +1,4 @@
-from .forms import AccountCreationForm
+from .forms import AccountRegistrationForm
 
 
 # from .models import Account
@@ -6,5 +6,5 @@ from .forms import AccountCreationForm
 
 def authentication_forms(request):
     return {
-        'register_form': AccountCreationForm(),
+        'register_form': AccountRegistrationForm(),
     }
