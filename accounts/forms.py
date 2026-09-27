@@ -1,78 +1,77 @@
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, Row, Column
-from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm
-from django.forms import Select, EmailField, CharField, EmailInput, PasswordInput, ModelForm, Form
+from crispy_forms.layout import Submit
+from django import forms
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
-from .models import Profile
-
-
-class AccountCreationForm(UserCreationForm):
-    class Meta:
-        model = get_user_model()
-        fields = ['username', 'account_type', 'user_type', 'password1', 'password2', 'email', 'national_id']
-        widgets = {
-            'account_type': Select(),
-            'user_type': Select(),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super(AccountCreationForm, self).__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.layout = Layout(
-            'username',
-            'email',
-            'national_id',
-            Row(
-                Column('account_type', css_class='col-md-6 mb-0'),
-                Column('user_type', css_class='col-md-6 mb-0'),
-            ),
-            Row(
-                Column('password1', css_class='col-md-6 mb-0'),
-                Column('password2', css_class='col-md-6 mb-0'),
-            ),
-            Submit('submit', 'Register', css_class='btn btn-primary btn-user btn-block', id="btnSubmit")
-        )
-
-        self.fields['username'].widget.attrs.update({'id': 'user-name'})
-        self.fields['email'].widget.attrs.update({'id': 'email'})
-        self.fields['account_type'].widget.attrs.update({'id': 'account-type'})
-        self.fields['user_type'].widget.attrs.update({'id': 'user-type'})
-        self.fields['password1'].widget.attrs.update({'id': 'password'})
-        self.fields['password2'].widget.attrs.update({'id': 'conform-password'})
-        self.fields['national_id'].widget.attrs.update({'id': 'national-id'})
+from .models import Account, Profile
 
 
-class LoginForm(Form):
-    email = EmailField(widget=EmailInput(attrs={'id': 'email'}))
-    password = CharField(widget=PasswordInput(attrs={'id': 'password'}))
+class BootstrapFormMixin:
+    """Adds a crispy-forms helper and Bootstrap widget classes to every field on the form."""
 
-
-class ProfileCreationForm(ModelForm):
-    class Meta:
-        model = Profile
-        exclude = ['account']
+    submit_label = "Save"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.layout = Layout(
-            Row(
-                Column('first_name', css_class='col-md-6 mb-0'),
-                Column('last_name', css_class='col-md-6 mb-0'),
-            ),
-            'profile_image',
-            'phone_number',
-            'address',
-            'city',
-            'zip_code',
-            Submit('submit', 'Update Profile', css_class='btn btn-primary btn-user btn-block', id="btnCreateProfile")
+        for field in self.fields.values():
+            css_class = "form-select" if isinstance(field.widget,
+                                                    (forms.Select, forms.SelectMultiple)) else "form-control"
+            if isinstance(field.widget, forms.CheckboxInput):
+                css_class = "form-check-input"
+            field.widget.attrs["class"] = f'{field.widget.attrs.get("class", "")} {css_class}'.strip()
+
+        self.helper = FormHelper(self)
+        self.helper.form_method = "post"
+        self.helper.add_input(Submit("submit", self.submit_label, css_class="btn btn-primary"))
+
+
+class AccountRegistrationForm(BootstrapFormMixin, UserCreationForm):
+    """Sign-up form; relies on UserCreationForm for password validation and hashing."""
+
+    submit_label = "Create account"
+
+    class Meta(UserCreationForm.Meta):
+        model = Account
+        fields = ("username", "email", "national_id", "account_type", "user_type")
+
+
+class AccountUpdateForm(BootstrapFormMixin, forms.ModelForm):
+    """Lets a customer edit their own non-sensitive account fields.
+
+    Deliberately excludes national_id, cc_number, bank_balances and is_blocked —
+    those are staff-managed and belong in the admin site, not self-service.
+    """
+
+    submit_label = "Update account"
+
+    class Meta:
+        model = Account
+        fields = ("username", "email", "account_type", "user_type")
+
+
+class ProfileUpdateForm(BootstrapFormMixin, forms.ModelForm):
+    submit_label = "Update profile"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.form_enctype = "multipart/form-data"  # required for the profile_image field
+
+    class Meta:
+        model = Profile
+        fields = (
+            "first_name",
+            "last_name",
+            "profile_image",
+            "phone_number",
+            "address",
+            "city",
+            "zip_code",
         )
 
-        self.fields['first_name'].widget.attrs.update({'id': 'first-name'})
-        self.fields['last_name'].widget.attrs.update({'id': 'last-name'})
-        self.fields['profile_image'].widget.attrs.update({'id': 'profile-image'})
-        self.fields['phone_number'].widget.attrs.update({'id': 'phone-number'})
-        self.fields['address'].widget.attrs.update({'id': 'address'})
-        self.fields['city'].widget.attrs.update({'id': 'city'})
-        self.fields['zip_code'].widget.attrs.update({'id': 'zip-code'})
+
+class CustomAuthenticationForm(BootstrapFormMixin, AuthenticationForm):
+    submit_label = "Log in"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].label = "Email"
