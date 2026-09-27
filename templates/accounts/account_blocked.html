@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Account blocked{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row mt-5 justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <h1 class="card-title text-danger">Account blocked</h1>
+                        <p class="card-text">
+                            A transfer from your account was blocked by the fraud detection system.
+                            Outgoing payments have been temporarily restricted while this is reviewed.
+                        </p>
+                        <p class="card-text text-muted">
+                            If you did not attempt this transfer, contact support immediately.
+                        </p>
+                        <a href="{% url 'accounts:login' %}" class="btn btn-primary">Return to login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

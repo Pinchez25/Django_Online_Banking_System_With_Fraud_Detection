@@ -17,7 +17,7 @@ from django.db import transaction
 from django.db.models import prefetch_related_objects
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, DetailView, FormView, UpdateView
+from django.views.generic import CreateView, DetailView, FormView, TemplateView, UpdateView
 
 from .forms import (
     AccountDeactivationForm,
@@ -224,3 +224,9 @@ class AccountPasswordResetConfirmView(PasswordResetConfirmView):
 
 class AccountPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = "accounts/password_reset_complete.html"
+
+
+class AccountBlockedView(TemplateView):
+    """Shown when the fraud detector blocks a transfer."""
+
+    template_name = "accounts/account_blocked.html"
