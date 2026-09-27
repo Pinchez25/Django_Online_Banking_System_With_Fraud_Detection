@@ -1,0 +1,75 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run Django Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: bank
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DEBUG: "false"
+      SECRET_KEY: "django-insecure-ci-test-key-for-github-actions"
+      POSTGRES_DB: "bank"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_HOST: "localhost"
+      POSTGRES_PORT: "5432"
+      DB_CONN_MAX_AGE: "0"
+      REDIS_URL: "redis://localhost:6379/0"
+      CHANNEL_REDIS_URL: "redis://localhost:6379/1"
+      EMAIL_HOST: "localhost"
+      EMAIL_PORT: "1025"
+      EMAIL_USE_TLS: "false"
+      EMAIL_HOST_USER: ""
+      EMAIL_HOST_PASSWORD: ""
+      DJANGO_LOG_LEVEL: "INFO"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Run Django system check
+        run: uv run python manage.py check
+
+      - name: Run tests
+        run: uv run python manage.py test
