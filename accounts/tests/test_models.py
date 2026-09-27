@@ -32,6 +32,15 @@ class NextOfKinModelTests(TestCase):
             [first, second],
         )
 
+    def test_account_and_profile_names_stay_in_sync(self):
+        self.account.first_name = "Amina"
+        self.account.last_name = "Njeri"
+        self.account.save()
+
+        self.account.profile.refresh_from_db()
+        self.assertEqual(self.account.profile.first_name, "Amina")
+        self.assertEqual(self.account.profile.last_name, "Njeri")
+
     def test_deactivation_retains_account_profile_and_next_of_kin(self):
         kin = NextOfKin.objects.create(
             profile=self.account.profile,
