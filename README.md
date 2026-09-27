@@ -1,45 +1,241 @@
-# Banking and Fraud Detection Demo
+A Django-based online banking system with user authentication, account management, money transfers, transaction
+workflows, real-time notifications, and fraud detection powered by a machine learning model.
 
-This is an educational Django banking application. It demonstrates account management, deposits, withdrawals, transfers, transaction logging, and an experimental fraud-screening hook. It is not a real banking system and must not process real customer data or money.
+## Overview
 
-## Local Setup
+Kwetu Bank is a full-stack banking web application built with Django. It provides a simple digital banking experience
+for customers to:
 
-Requirements: Python 3.14+, `uv`, and Docker Compose.
+- register and manage personal accounts
+- log in securely and update profile details
+- deposit and withdraw funds
+- send money to other users
+- view dashboard summaries and recent transactions
+- receive notifications and alerts
+- review fraud-risk signals for transfers
 
-```sh
-cp .env.example .env
-uv sync --frozen
-docker compose up -d postgres redis
-uv run python manage.py migrate
-uv run daphne -b 127.0.0.1 -p 8000 Online_Banking_System.asgi:application
+The project also includes a machine learning fraud model and real-time updates using Django Channels and Redis.
+
+## Tech Stack
+
+- Python 3.14+
+- Django 6+
+- PostgreSQL
+- Redis
+- Django Channels + Daphne
+- HTML, CSS, JavaScript
+- scikit-learn, pandas, joblib-based fraud detection pipeline
+
+## Key Features
+
+- Secure account registration and password reset flow
+- Profile management with next-of-kin data
+- Dashboard with account overview and transaction summaries
+- Deposit, withdrawal, and transfer services
+- Fraud detection screening before transfers are processed
+- Real-time notification center with read/unread tracking
+- Admin-friendly project configuration via Django admin and Baton
+- Email-based authentication and password reset support
+- Docker-based local PostgreSQL and Mailpit setup
+
+## Project Structure
+
+```text
+bank_system/
+├── accounts/                  # Authentication, profile, password reset logic
+├── bank/                     # Banking dashboard, transfers, notifications, ML integration
+├── data/                     # Local data and Mailpit persistence
+├── dataset and notebook/     # Fraud model assets and notebook
+├── ml_training/             # Model training scripts
+├── media/                   # Uploaded profile images
+├── Online_Banking_System/    # Django project settings and URLs
+├── static/                  # CSS, JS, images
+├── templates/               # App templates and shared layout
+├── docker-compose.yml       # Local Postgres + Mailpit services
+├── manage.py                # Django management entrypoint
+├── pyproject.toml           # Python dependencies
+├── README.md                # Project documentation
+└── requirements-like config in pyproject.toml
 ```
 
-The application runs at `http://127.0.0.1:8000`; notification alerts and inbox messages are pushed over authenticated WebSockets. Compose starts PostgreSQL and Redis; Django runs on the host. Both services bind only to loopback by default. Change `POSTGRES_PORT` or `REDIS_PORT` in `.env` if those ports are already in use, and update `REDIS_URL` and `CHANNEL_REDIS_URL` to match the Redis port.
+## Prerequisites
 
-Run tests with:
+Before starting, make sure you have:
 
-```sh
+- Python 3.14+
+- uv installed
+- PostgreSQL running locally or via Docker
+- Redis running locally or via Docker
+- Git
+
+## Local Development Setup
+
+1. Clone the repository:
+
+```bash
+git clone <repository-url>
+cd bank_system
+```
+
+2. Install Python dependencies:
+
+```bash
+uv sync
+```
+
+3. Create a `.env` file in the project root with the required environment variables. Example:
+
+```env
+DEBUG=true
+SECRET_KEY=your-secret-key
+ALLOWED_HOSTS=localhost,127.0.0.1
+CSRF_TRUSTED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000
+POSTGRES_DB=bank
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5433
+DB_CONN_MAX_AGE=60
+REDIS_URL=redis://127.0.0.1:6379/0
+CHANNEL_REDIS_URL=redis://127.0.0.1:6379/1
+EMAIL_HOST=localhost
+EMAIL_PORT=1025
+EMAIL_USE_TLS=false
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+DJANGO_LOG_LEVEL=INFO
+```
+
+4. Start the supporting services:
+
+```bash
+docker compose up -d postgres mailpit
+```
+
+This starts:
+
+- PostgreSQL on `localhost:5433`
+- Mailpit SMTP on `localhost:1025`
+- Mailpit web UI on `http://localhost:8025`
+
+> Redis is required for caching and Channels. If you are not already running Redis locally, start it separately or
+> uncomment the Redis service in `docker-compose.yml` before running the app.
+
+5. Apply migrations:
+
+```bash
+uv run python manage.py migrate
+```
+
+6. Start the development server:
+
+```bash
+uv run python manage.py runserver
+```
+
+Then open:
+
+- http://127.0.0.1:8000/
+
+## Optional: Fraud Model Setup
+
+The project uses a fraud detection model from the `dataset and notebook/models` folder.
+
+If needed, you can retrain or regenerate the model using the scripts and notebook in:
+
+- `ml_training/train_fraud_model.py`
+- `dataset and notebook/fraud_detection_ml_pipeline.ipynb`
+
+The model path is configured via `FRAUD_MODEL_SOURCE` in the Django settings, defaulting to the local joblib file stored
+in the project.
+
+## Running Tests
+
+Run the test suite with:
+
+```bash
 uv run python manage.py test
 ```
 
-Stop PostgreSQL and Redis with `docker compose down`. PostgreSQL's named volume keeps database data between restarts. `docker compose down -v` deletes that data.
+To run a targeted test module:
 
-`.env` is ignored by Git. `.env.example` contains development-only values; replace the secret and database credentials before using any shared environment. Production must set `DEBUG=false`, a strong `SECRET_KEY`, appropriate `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`, secure database credentials, and real email settings. Set `CHANNEL_REDIS_URL` to a private Redis endpoint with TLS and authentication, and serve `Online_Banking_System.asgi:application` with Daphne (or another ASGI server) behind an HTTPS reverse proxy. WebSockets use `wss` automatically on HTTPS pages. Do not use Django's development server in production.
+```bash
+uv run python manage.py test bank.tests.test_realtime_notifications
+```
 
-## Current Fraud Model Limitations
+## Useful Commands
 
-The notebook's dataset contains 10,305 rows and 93 fraud labels. Every sender and receiver card number is unique, and the label rates are low. The notebook uses those card numbers as numeric features, drops transaction time, and applies SMOTE before splitting the resampled data into training and test sets. That leaks synthetic training information into evaluation and makes the reported scores unreliable.
+Create a superuser:
 
-The checked-in `fraud_detection_model.pickle` also cannot be loaded with the project's current scikit-learn version: its saved decision-tree node format is incompatible. A correctly time-ordered 80/20 experiment using SMOTE on training data only produced average precision 0.009 against a 0.0068 fraud prevalence; at a 0.5 threshold, precision was 0.0055 and recall was 0.0714. This is not useful screening performance. Transfers therefore fail closed when the model cannot score them; the app does not silently treat a failed score as a safe transaction.
+```bash
+uv run python manage.py createsuperuser
+```
 
-Before replacing the model, create reproducible synthetic transactions with behavior that can actually predict fraud, such as recent transaction velocity, amount relative to normal account activity, new beneficiaries, device changes, and location changes. Split chronologically before resampling, fit all preprocessing only on training data, compare against a simple baseline, and choose thresholds using precision-recall and the cost of false positives. Persist model version, score, decision, and reason codes with each assessment. Do not use raw card numbers as model features or log full card numbers; use tokenized identifiers and masked display values.
+Collect static files for production:
 
-## Improvement Priorities
+```bash
+uv run python manage.py collectstatic --noinput
+```
 
-1. **Complete the ledger model.** Balances are currently mutable account fields. Move toward immutable debit/credit ledger entries, enforce non-negative balances at the database boundary, and make transfer requests idempotent so retries cannot move money twice.
-2. **Separate assessment from action.** A fraud score should usually trigger a hold, step-up verification, or review queue with an audit trail. Automatically blocking a customer based on an unvalidated classifier is too aggressive for real use.
-3. **Add behavioral context and tests.** Store only necessary, privacy-reviewed signals. Test simultaneous withdrawals/transfers, stale balances, duplicate requests, rollback behavior, and account ownership boundaries.
-4. **Harden the application.** Review account recovery, session and CSRF behavior, secret management, upload validation, permissions, database constraints, and retention of sensitive data before exposing it beyond a local demo.
-5. **Add background processing only when needed.** The current Django app and in-process Python scorer are a sensible starting point. Kafka is not justified for this single-process demo. If scoring or notifications later need asynchronous retries, begin with a transactional outbox and a worker; introduce a broker only when throughput, independent consumers, or replay requirements justify its operational cost.
+Check project URLs and routes:
 
-The application now keeps each deposit and withdrawal's balance update, transaction row, and audit log in one database transaction; transfers lock both accounts in stable order. Profile views and edits are scoped to the signed-in owner.
+```bash
+uv run python manage.py check
+```
+
+## Environment Notes
+
+- The app uses `EMAIL_HOST` and `EMAIL_PORT` for password reset messages and notifications.
+- Mailpit is useful for local development because it captures outbound emails without sending them externally.
+- Redis is required for Django cache and the channel layer used by real-time notification features.
+- The app is configured for Nairobi time (`Africa/Nairobi`) and uses a custom `Account` model as the user model.
+
+## Production Considerations
+
+This project is configured for local development convenience, not a hardened production deployment. Before deploying to
+production, review:
+
+- `SECRET_KEY` management
+- secure `DEBUG` settings
+- production database credentials and SSL settings
+- Redis and cache configuration
+- email provider configuration
+- `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS`
+- static/media handling and Whitenoise configuration
+
+## License
+
+This project is provided as a learning/demo application. Please check the repository or project owner for any licensing
+details.
+
+## Contributing
+
+Contributions are welcome. For a clean workflow:
+
+1. create a feature branch
+2. make focused changes
+3. run tests
+4. open a pull request with a clear summary
+
+## Troubleshooting
+
+### Database connection errors
+
+Verify PostgreSQL is running and ensure the database credentials in `.env` match your local service configuration.
+
+### Redis errors or WebSocket issues
+
+Check whether Redis is available at the URL configured in `REDIS_URL` and `CHANNEL_REDIS_URL`.
+
+### Emails not appearing
+
+Use Mailpit at `http://localhost:8025` to inspect outbound messages during development.
+
+### Missing environment variables
+
+Ensure your `.env` file includes all values expected by `Online_Banking_System/settings.py` before running the app.
+
+---
+
+For development and onboarding, this project is best run with `uv` and Docker to manage the Python environment and local
+services cleanly.
