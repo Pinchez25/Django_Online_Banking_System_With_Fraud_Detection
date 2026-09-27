@@ -204,3 +204,67 @@ GRAPH_MODELS = {
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Logging Configuration
+# https://docs.djangoproject.com/en/4.1/topics/logging/
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] {levelname} [{name}:{lineno}] {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+    },
+    "filters": {
+        "require_debug_false": {
+            "()": "django.utils.log.RequireDebugFalse",
+        },
+        "require_debug_true": {
+            "()": "django.utils.log.RequireDebugTrue",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": os.getenv("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django.server": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "accounts": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "bank": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
