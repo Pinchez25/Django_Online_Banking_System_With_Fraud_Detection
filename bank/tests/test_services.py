@@ -2,6 +2,7 @@ from decimal import Decimal
 from unittest.mock import Mock
 import re
 
+from django.contrib.auth.models import Permission
 from django.test import TestCase, override_settings
 
 from bank.models import Account, Notification, Transaction, TransactionLog
@@ -21,16 +22,34 @@ class AccountServiceTests(TestCase):
             bank_balances=Decimal("1000.00"),
         )
 
-    def test_deposit_updates_balance_and_creates_transaction(self):
+    def test_deposit_creates_pending_transaction_until_approved(self):
         DepositService().execute(account=self.account, amount=Decimal("250.00"))
         self.account.refresh_from_db()
-        self.assertEqual(self.account.bank_balances, Decimal("1250.00"))
+        self.assertEqual(self.account.bank_balances, Decimal("1000.00"))
         transaction = Transaction.objects.get(account=self.account, type="D")
+        self.assertEqual(transaction.status, Transaction.Status.PENDING)
         self.assertEqual(len(transaction.transaction_id), 10)
         self.assertRegex(transaction.transaction_id, r"^[A-HJ-NP-Z2-9]{10}$")
         notification = Notification.objects.get(recipient=self.account)
         self.assertEqual(notification.kind, Notification.Kind.ALERT)
-        self.assertEqual(notification.title, "Deposit received")
+        self.assertEqual(notification.title, "Deposit submitted for approval")
+
+    def test_manager_can_approve_deposit(self):
+        manager = Account.objects.create_user(
+            username="manager",
+            email="manager@example.com",
+            password="password",
+            national_id=10000004,
+        )
+        manager.user_permissions.add(Permission.objects.get(codename="approve_transaction"))
+
+        deposit = DepositService().execute(account=self.account, amount=Decimal("250.00"))
+        self.assertEqual(deposit.transaction.status, Transaction.Status.PENDING)
+
+        deposit.transaction.approve(approved_by=manager)
+        self.account.refresh_from_db()
+        self.assertEqual(self.account.bank_balances, Decimal("1250.00"))
+        self.assertEqual(deposit.transaction.status, Transaction.Status.APPROVED)
 
     def test_withdrawal_rejects_insufficient_funds(self):
         with self.assertRaises(InsufficientFundsError):

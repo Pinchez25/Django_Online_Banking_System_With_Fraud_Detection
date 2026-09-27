@@ -42,7 +42,7 @@ class TestBankViews(TestCase):
         self.assertIn('transactions', response.context)
         self.assertIn('cards', response.context)
 
-    def test_deposit_updates_balance_and_records_transaction(self):
+    def test_deposit_creates_pending_transaction(self):
         account = get_user_model().objects.create_user(
             username='depositor', password='password123', email='depositor@example.com', national_id=10003,
             bank_balances=100,
@@ -53,10 +53,11 @@ class TestBankViews(TestCase):
 
         account.refresh_from_db()
         self.assertRedirects(response, reverse('bank:dashboard'))
-        self.assertEqual(account.bank_balances, 125)
-        self.assertEqual(Transaction.objects.filter(account=account, type='D').count(), 1)
+        self.assertEqual(account.bank_balances, 100)
+        transaction = Transaction.objects.get(account=account, type='D')
+        self.assertEqual(transaction.status, Transaction.Status.PENDING)
 
-    def test_withdrawal_updates_balance_and_records_transaction(self):
+    def test_withdrawal_creates_pending_transaction(self):
         account = get_user_model().objects.create_user(
             username='withdrawer', password='password123', email='withdrawer@example.com', national_id=10004,
             bank_balances=100,
@@ -67,8 +68,9 @@ class TestBankViews(TestCase):
 
         account.refresh_from_db()
         self.assertRedirects(response, reverse('bank:dashboard'))
-        self.assertEqual(account.bank_balances, 75)
-        self.assertEqual(Transaction.objects.filter(account=account, type='W').count(), 1)
+        self.assertEqual(account.bank_balances, 100)
+        transaction = Transaction.objects.get(account=account, type='W')
+        self.assertEqual(transaction.status, Transaction.Status.PENDING)
 
     @patch('bank.services.transfers.FraudService.assess_transfer')
     def test_fraudulent_transfer_is_blocked_without_recording_success(self, assess_transfer):
