@@ -1,6 +1,4 @@
 {% extends 'base.html' %}
-{% load crispy_forms_filters %}
-
 {% block content %}
     <div class="container">
 
@@ -22,10 +20,26 @@
                                 </h1>
                                 {#                                {{ request.user.is_superuser }}#}
                             </div>
-                            <form method="post" autocomplete="off">
+                            <form method="post" class="modal__form" autocomplete="off">
                                 {% csrf_token %}
-                                {{ form|crispy }}
-                                <input type="submit" value="Confirm Transaction" class="btn btn-primary btn-block">
+                                {% for error in form.non_field_errors %}
+                                    <p class="field__error" role="alert">{{ error }}</p>
+                                {% endfor %}
+                                {% for field in form %}
+                                    {% if field.is_hidden %}
+                                        {{ field }}
+                                    {% else %}
+                                        <label class="field" for="{{ field.id_for_label }}">
+                                            <span>{{ field.label }}</span>
+                                            {{ field }}
+                                            {% if field.help_text %}<span class="field__hint">{{ field.help_text }}</span>{% endif %}
+                                            {% for error in field.errors %}
+                                                <span class="field__error" role="alert">{{ error }}</span>
+                                            {% endfor %}
+                                        </label>
+                                    {% endif %}
+                                {% endfor %}
+                                <button type="submit" class="btn btn--primary">Confirm Transaction</button>
                             </form>
                             {#                            <hr>#}
                             {#                            <div class="text-center">#}
