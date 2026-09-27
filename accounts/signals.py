@@ -18,6 +18,9 @@ def create_profile(sender, instance, created, **kwargs):
     somehow already exists (e.g. a fixture load), rather than raising.
     """
     if created:
-        _, provisioned = Profile.objects.get_or_create(account=instance)
+        _, provisioned = Profile.objects.get_or_create(
+            account=instance,
+            defaults={"first_name": instance.first_name, "last_name": instance.last_name},
+        )
         if provisioned:
             logger.info("Profile provisioned for account: %s", instance.pk)
