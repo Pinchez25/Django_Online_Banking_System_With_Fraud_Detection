@@ -35,7 +35,7 @@ class AccountRegisterView(CreateView):
 
     model = Account
     form_class = AccountRegistrationForm
-    template_name = "registration/register.html"
+    template_name = "accounts/register.html"
     success_url = reverse_lazy("accounts:profile-detail")
 
     def form_valid(self, form):
@@ -47,7 +47,7 @@ class AccountRegisterView(CreateView):
 
 
 class AccountLoginView(LoginView):
-    template_name = "registration/login.html"
+    template_name = "accounts/login.html"
     authentication_form = CustomAuthenticationForm
     redirect_authenticated_user = True
 
@@ -142,7 +142,7 @@ class AccountDeactivateView(LoginRequiredMixin, DeleteView):
 
 
 class AccountPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
-    template_name = "registration/password_change_form.html"
+    template_name = "accounts/password_change_form.html"
     success_url = reverse_lazy("accounts:password-change-done")
 
     def form_valid(self, form):
@@ -153,11 +153,11 @@ class AccountPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
 
 
 class AccountPasswordChangeDoneView(LoginRequiredMixin, PasswordChangeDoneView):
-    template_name = "registration/password_change_done.html"
+    template_name = "accounts/password_change_done.html"
 
 
 class AccountPasswordResetView(PasswordResetView):
-    template_name = "registration/password_reset_form.html"
+    template_name = "accounts/password_reset_form.html"
     email_template_name = "accounts/emails/password_reset_email.txt"
     html_email_template_name = "accounts/emails/password_reset_email.html"
     subject_template_name = "accounts/emails/password_reset_subject.txt"
@@ -169,11 +169,11 @@ class AccountPasswordResetView(PasswordResetView):
 
 
 class AccountPasswordResetDoneView(PasswordResetDoneView):
-    template_name = "registration/password_reset_done.html"
+    template_name = "accounts/password_reset_done.html"
 
 
 class AccountPasswordResetConfirmView(PasswordResetConfirmView):
-    template_name = "registration/password_reset_confirm.html"
+    template_name = "accounts/password_reset_confirm.html"
     success_url = reverse_lazy("accounts:password-reset-complete")
 
     def form_valid(self, form):
@@ -183,4 +183,4 @@ class AccountPasswordResetConfirmView(PasswordResetConfirmView):
 
 
 class AccountPasswordResetCompleteView(PasswordResetCompleteView):
-    template_name = "registration/password_reset_complete.html"
+    template_name = "accounts/password_reset_complete.html"
