@@ -4,7 +4,7 @@ import re
 
 from django.test import TestCase, override_settings
 
-from bank.models import Account, Transaction, TransactionLog
+from bank.models import Account, Notification, Transaction, TransactionLog
 from bank.ml.detector import FraudResult
 from bank.services.accounts import DepositService, InsufficientFundsError, WithdrawalService
 from bank.services.fraud import FraudAssessment
@@ -28,6 +28,9 @@ class AccountServiceTests(TestCase):
         transaction = Transaction.objects.get(account=self.account, type="D")
         self.assertEqual(len(transaction.transaction_id), 10)
         self.assertRegex(transaction.transaction_id, r"^[A-HJ-NP-Z2-9]{10}$")
+        notification = Notification.objects.get(recipient=self.account)
+        self.assertEqual(notification.kind, Notification.Kind.ALERT)
+        self.assertEqual(notification.title, "Deposit received")
 
     def test_withdrawal_rejects_insufficient_funds(self):
         with self.assertRaises(InsufficientFundsError):
@@ -77,6 +80,10 @@ class TransferServiceTests(TestCase):
         self.assertEqual(Transaction.objects.filter(account=self.sender, type="T").count(), 1)
         self.assertEqual(TransactionLog.objects.count(), 1)
         self.assertFalse(TransactionLog.objects.get().is_fraud)
+        self.assertEqual(
+            Notification.objects.filter(kind=Notification.Kind.ALERT).count(),
+            2,
+        )
 
     @override_settings(FRAUD_ALERT_EMAIL="alerts@example.com", DEFAULT_FROM_EMAIL="noreply@example.com")
     def test_fraud_blocks_account_and_keeps_audit_record(self):
@@ -106,3 +113,7 @@ class TransferServiceTests(TestCase):
         log = TransactionLog.objects.get()
         self.assertTrue(log.is_fraud)
         self.assertEqual(log.fraud_probability, 0.99)
+        self.assertEqual(
+            Notification.objects.get(recipient=self.sender).title,
+            "Transfer blocked",
+        )
