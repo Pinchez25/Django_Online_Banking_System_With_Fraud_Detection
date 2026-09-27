@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Deactivate account{% endblock %}
+
+{% block content %}
+    <a href="{% url 'accounts:profile-detail' %}" class="auth-back"><span class="icon" data-icon="arrow-left"></span> Back to profile</a>
+
+    <section class="panel panel--narrow">
+        <div class="settings__section-head">
+            <h3>Deactivate your account</h3>
+            <p>This will deactivate your account. You will be able to reactivate it later if needed.</p>
+        </div>
+
+        <form method="post" class="auth-form mb-16">
+            {% csrf_token %}
+            <label class="field" for="id_confirm_password">
+                <span>Confirm your password to continue</span>
+                <input type="password" name="password" id="id_confirm_password" required autocomplete="current-password">
+            </label>
+            <label class="field field--checkbox" for="id_confirm_deactivate">
+                <input type="checkbox" name="confirm" id="id_confirm_deactivate" required>
+                <span>I understand this action will deactivate my account</span>
+            </label>
+
+            <div class="modal__actions actions--start">
+                <button type="submit" class="btn btn--danger">Deactivate account</button>
+                <a href="{% url 'accounts:profile-detail' %}" class="btn btn--ghost">Cancel</a>
+            </div>
+        </form>
+    </section>
+{% endblock %}
