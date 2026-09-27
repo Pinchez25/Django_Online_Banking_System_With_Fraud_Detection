@@ -8,14 +8,14 @@ class TestBankUrls(TestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_deposit_page(self):
-        response = self.client.get(reverse('deposit-money'))
+        response = self.client.get(reverse('bank:deposit-money'))
         self.assertEqual(response.status_code, 302)
 
     def test_withdraw_page(self):
-        response = self.client.get(reverse('withdraw-money'))
+        response = self.client.get(reverse('bank:withdraw-money'))
         self.assertEqual(response.status_code, 302)
 
     def test_send_page(self):
-        response = self.client.get(reverse('send-money'))
+        response = self.client.get(reverse('bank:send-money'))
         self.assertEqual(response.status_code, 302)
 
