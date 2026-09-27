@@ -1,34 +1,37 @@
-from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, \
-    PasswordResetConfirmView, PasswordResetCompleteView
 from django.urls import path
 
-from .views import user_login, logout_user, UserRegistrationView, UpdateProfile, ProfileView, account_locked, \
-    account_blocked
+from . import views
+
+app_name = "accounts"
 
 urlpatterns = [
-    path('login/', user_login, name='login'),
-    path('logout/', logout_user, name='logout'),
-    path('register/', UserRegistrationView.as_view(), name='register'),
-    path('account-locked/', account_locked, name='account-locked'),
-    path('account-blocked/', account_blocked, name='account-blocked'),
-
-    # path('create-online-account/', CreateOnlineBankAccountView.as_view(), name="create-online-account"),
-
-    # password change views
-    path('reset_password/', PasswordResetView.as_view(template_name="accounts/forgot-password.html"),
-         name='reset_password'),
-    path('reset_password_sent/', PasswordResetDoneView.as_view(template_name="accounts/password_reset_sent.html"),
-         name='password_reset_done'),
-    path('reset/<uidb64>/<token>/', PasswordResetConfirmView.as_view(template_name="accounts/reset.html"),
-         name='password_reset_confirm'),
-    path('reset_password_complete/',
-         PasswordResetCompleteView.as_view(template_name="accounts/reset_password_complete.html"),
-         name='password_reset_complete'),
-
-    # profile view
-    path('<str:pk>/profile/', ProfileView.as_view(), name='profile'),
-    path('update-profile/<str:pk>/', UpdateProfile.as_view(), name='update-profile')
-
+    path("register/", views.AccountRegisterView.as_view(), name="register"),
+    path("login/", views.AccountLoginView.as_view(), name="login"),
+    path("logout/", views.AccountLogoutView.as_view(), name="logout"),
+    path("profile/", views.AccountProfileDetailView.as_view(), name="profile-detail"),
+    path("profile/edit/", views.ProfileUpdateView.as_view(), name="profile-update"),
+    path("account/edit/", views.AccountUpdateView.as_view(), name="account-update"),
+    path("account/deactivate/", views.AccountDeactivateView.as_view(), name="account-deactivate"),
+    path("password/change/", views.AccountPasswordChangeView.as_view(), name="password-change"),
+    path(
+        "password/change/done/",
+        views.AccountPasswordChangeDoneView.as_view(),
+        name="password-change-done",
+    ),
+    path("password/reset/", views.AccountPasswordResetView.as_view(), name="password-reset"),
+    path(
+        "password/reset/done/",
+        views.AccountPasswordResetDoneView.as_view(),
+        name="password-reset-done",
+    ),
+    path(
+        "password/reset/confirm/<uidb64>/<token>/",
+        views.AccountPasswordResetConfirmView.as_view(),
+        name="password-reset-confirm",
+    ),
+    path(
+        "password/reset/complete/",
+        views.AccountPasswordResetCompleteView.as_view(),
+        name="password-reset-complete",
+    ),
 ]
-
-
