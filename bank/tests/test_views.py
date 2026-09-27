@@ -86,11 +86,11 @@ class TestBankViews(TestCase):
         account_model = get_user_model()
         sender = account_model.objects.create_user(
             username='sender', password='password123', email='sender@example.com', national_id=10001,
-            bank_balances=100,
+            bank_balances=100, cc_number='4242424242424242',
         )
         recipient = account_model.objects.create_user(
             username='recipient', password='password123', email='recipient@example.com', national_id=10002,
-            bank_balances=50,
+            bank_balances=50, cc_number='4111111111111111',
         )
         self.client.force_login(sender)
 
@@ -115,11 +115,11 @@ class TestBankViews(TestCase):
         account_model = get_user_model()
         sender = account_model.objects.create_user(
             username='screening-sender', password='password123', email='screening-sender@example.com',
-            national_id=10005, bank_balances=100,
+            national_id=10005, bank_balances=100, cc_number='4242424242424242',
         )
         recipient = account_model.objects.create_user(
             username='screening-recipient', password='password123', email='screening-recipient@example.com',
-            national_id=10006, bank_balances=50,
+            national_id=10006, bank_balances=50, cc_number='4111111111111111',
         )
         self.client.force_login(sender)
 
