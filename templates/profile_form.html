@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_edit %}Edit profile{% else %}Complete your profile{% endif %}{% endblock %}
+
+{% block content %}
+    <a href="{% url 'accounts:profile-detail' %}" class="auth-back"><span class="icon" data-icon="arrow-left"></span> Back to profile</a>
+
+    <section class="panel">
+        <div class="panel__head panel__head--tight">
+            <div>
+                <h2>{% if is_edit %}Edit profile{% else %}Complete your profile{% endif %}</h2>
+                <p class="panel__subtitle">Keep your KYC details current — this is what appears on your statements.</p>
+            </div>
+        </div>
+
+        <form method="post" class="form-grid">
+            {% csrf_token %}
+
+            <label class="field">
+                <span>First name</span>
+                <input type="text" name="first_name" value="{{ profile.first_name|default:'Amina' }}" required>
+            </label>
+            <label class="field">
+                <span>Last name</span>
+                <input type="text" name="last_name" value="{{ profile.last_name|default:'Wanjiru' }}" required>
+            </label>
+
+            <label class="field">
+                <span>Email</span>
+                <input type="email" name="email" value="{{ profile.email|default:'amina.wanjiru@example.com' }}" required>
+            </label>
+            <label class="field">
+                <span>Phone number</span>
+                <input type="tel" name="phone" value="{{ profile.phone|default:'+254 722 000 000' }}" required>
+            </label>
+
+            <label class="field">
+                <span>National ID number</span>
+                <input type="text" name="national_id" value="{{ profile.national_id|default:'30021147' }}" required>
+            </label>
+            <label class="field">
+                <span>Date of birth</span>
+                <input type="date" name="date_of_birth" value="{{ profile.date_of_birth_iso|default:'1994-05-14' }}" required>
+            </label>
+
+            <label class="field">
+                <span>Occupation</span>
+                <input type="text" name="occupation" value="{{ profile.occupation|default:'Software developer' }}">
+            </label>
+            <label class="field">
+                <span>Next of kin</span>
+                <input type="text" name="next_of_kin" value="{{ profile.next_of_kin|default:'' }}" placeholder="Full name">
+            </label>
+
+            <label class="field field--full">
+                <span>Residential address</span>
+                <input type="text" name="address" value="{{ profile.address|default:'Kilimani, Nairobi' }}" required>
+            </label>
+
+            <label class="field field--full">
+                <span>Profile photo</span>
+                <input type="file" name="avatar" accept="image/*">
+            </label>
+
+            <div class="modal__actions actions--start field--full">
+                <button type="submit" class="btn btn--primary">Save changes</button>
+                <a href="{% url 'accounts:profile-detail' %}" class="btn btn--ghost">Cancel</a>
+            </div>
+        </form>
+    </section>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% if messages %}
+<ul class="messages" id="djangoMessages">
+    {% for message in messages %}
+    <li class="message {% if message.tags %}message--{{ message.tags }}{% endif %}" role="{% if message.tags == 'error' %}alert{% else %}status{% endif %}">
+        <span class="message__dot"></span>
+        <p class="message__text">{{ message }}</p>
+        <button type="button" class="message__close" data-message-close aria-label="Dismiss">&times;</button>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}

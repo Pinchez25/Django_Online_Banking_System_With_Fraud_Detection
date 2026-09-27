@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+    <div class="topbar__greeting page-head">
+        <h1>Settings</h1>
+        <p>Manage how Jumla Bank works for you.</p>
+    </div>
+
+    <div class="settings">
+        <nav class="settings__nav">
+            <a href="#notifications" class="is-active">Notifications</a>
+            <a href="#security">Security</a>
+            <a href="#preferences">Preferences</a>
+            <a href="{% url 'accounts:profile-detail' %}">Profile</a>
+        </nav>
+
+        <div class="settings__content">
+            <section class="panel settings__section" id="notifications">
+                <div class="settings__section-head">
+                    <h3>Notifications</h3>
+                    <p>Choose how we reach you about account activity.</p>
+                </div>
+
+                {% for item in notification_settings %}
+                <div class="settings-row">
+                    <div>
+                        <p class="settings-row__label">{{ item.label }}</p>
+                        <p class="settings-row__hint">{{ item.hint }}</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" {% if item.enabled %}checked{% endif %}>
+                        <span class="switch__track"></span>
+                    </label>
+                </div>
+                {% endfor %}
+            </section>
+
+            <section class="panel settings__section" id="security">
+                <div class="settings__section-head">
+                    <h3>Security</h3>
+                    <p>Keep your account locked down.</p>
+                </div>
+
+                <div class="settings-row">
+                    <div>
+                        <p class="settings-row__label">Password</p>
+                        <p class="settings-row__hint">Last changed {{ security.password_changed|default:"14 Aug 2026" }}</p>
+                    </div>
+                    <a href="{% url 'accounts:password-change' %}" class="btn btn--ghost">Change password</a>
+                </div>
+
+                <div class="settings-row">
+                    <div>
+                        <p class="settings-row__label">Two-factor authentication</p>
+                        <p class="settings-row__hint">Require a one-time code at sign in</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" {% if security.two_factor_enabled %}checked{% endif %}>
+                        <span class="switch__track"></span>
+                    </label>
+                </div>
+
+                <div class="settings-row">
+                    <div>
+                        <p class="settings-row__label">Biometric sign-in</p>
+                        <p class="settings-row__hint">Use fingerprint or face unlock on this device</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" {% if security.biometric_enabled %}checked{% endif %}>
+                        <span class="switch__track"></span>
+                    </label>
+                </div>
+
+                <div class="settings-row settings-row--block">
+                    <p class="settings-row__label settings-row__title">Active sessions</p>
+                    {% for session in security.sessions %}
+                    <div class="session-item">
+                        <div class="session-item__meta">
+                            <strong>{{ session.device }}</strong>
+                            <span>{{ session.location }} · {{ session.last_active }}</span>
+                        </div>
+                        {% if session.is_current %}
+                            <span class="pill pill--completed">This device</span>
+                        {% else %}
+                            <button type="button" class="btn btn--ghost">Sign out</button>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <section class="panel settings__section" id="preferences">
+                <div class="settings__section-head">
+                    <h3>Preferences</h3>
+                    <p>Regional and display settings.</p>
+                </div>
+
+                <form class="form-grid">
+                    <label class="field">
+                        <span>Currency</span>
+                        <select name="currency">
+                            <option {% if preferences.currency == "KES" %}selected{% endif %}>KES</option>
+                            <option {% if preferences.currency == "USD" %}selected{% endif %}>USD</option>
+                            <option {% if preferences.currency == "EUR" %}selected{% endif %}>EUR</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>Language</span>
+                        <select name="language">
+                            <option {% if preferences.language == "English" %}selected{% endif %}>English</option>
+                            <option {% if preferences.language == "Kiswahili" %}selected{% endif %}>Kiswahili</option>
+                        </select>
+                    </label>
+                    <label class="field field--full">
+                        <span>Statement delivery</span>
+                        <select name="statement_delivery">
+                            <option {% if preferences.statement_delivery == "Email" %}selected{% endif %}>Email</option>
+                            <option {% if preferences.statement_delivery == "Post" %}selected{% endif %}>Post</option>
+                            <option {% if preferences.statement_delivery == "In-app only" %}selected{% endif %}>In-app only</option>
+                        </select>
+                    </label>
+                </form>
+                <div class="modal__actions actions--start mt-16">
+                    <button type="submit" class="btn btn--primary">Save preferences</button>
+                </div>
+            </section>
+        </div>
+    </div>
+{% endblock %}

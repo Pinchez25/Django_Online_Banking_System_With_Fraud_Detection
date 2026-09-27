@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Delete account{% endblock %}
+
+{% block content %}
+    <a href="{% url 'accounts:profile-detail' %}" class="auth-back"><span class="icon" data-icon="arrow-left"></span> Back to profile</a>
+
+    <section class="panel panel--narrow">
+        <div class="settings__section-head">
+            <h3>Delete your account</h3>
+            <p>This is permanent. Your account, cards and statement history will be closed and cannot be recovered.</p>
+        </div>
+
+        <ul class="popover__list list--plain">
+            <li class="popover__item">
+                <span class="popover__dot"></span>
+                <p class="popover__title">Settle any outstanding loan balance first — currently KES {{ summary.loans_total|default:"64,000.00" }}</p>
+            </li>
+            <li class="popover__item">
+                <span class="popover__dot"></span>
+                <p class="popover__title">Your card ending {{ card_last_four|default:"8890" }} will be deactivated immediately</p>
+            </li>
+        </ul>
+
+        <form method="post" class="auth-form mb-16">
+            {% csrf_token %}
+            <label class="field" for="id_confirm_password">
+                <span>Confirm your password to continue</span>
+                <input type="password" name="password" id="id_confirm_password" required autocomplete="current-password">
+            </label>
+            <label class="field field--checkbox" for="id_confirm_close">
+                <input type="checkbox" name="confirm" id="id_confirm_close" required>
+                <span>I understand this action cannot be undone</span>
+            </label>
+
+            <div class="modal__actions actions--start">
+                <button type="submit" class="btn btn--danger">Permanently delete account</button>
+                <a href="{% url 'accounts:profile-detail' %}" class="btn btn--ghost">Cancel</a>
+            </div>
+        </form>
+    </section>
+{% endblock %}

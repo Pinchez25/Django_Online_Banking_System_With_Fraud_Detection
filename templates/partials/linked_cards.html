@@ -1,0 +1,20 @@
+<section class="panel panel--tight" aria-label="Linked cards">
+    <div class="panel__head panel__head--tight">
+        <h2>Your cards</h2>
+        <a href="#" class="link-sm">Manage</a>
+    </div>
+    <div class="cards-strip">
+        {% for card in cards %}
+        <div class="bank-card bank-card--{{ card.scheme }}">
+            <p class="bank-card__scheme">{{ card.scheme|title }}</p>
+            <p class="bank-card__number">{{ card.masked_number }}</p>
+            <div class="bank-card__foot">
+                <span>{{ card.holder }}</span>
+                <span>{{ card.expiry }}</span>
+            </div>
+        </div>
+        {% empty %}
+        <p class="panel__empty">No cards linked yet.</p>
+        {% endfor %}
+    </div>
+</section>

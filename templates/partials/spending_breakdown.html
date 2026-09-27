@@ -1,0 +1,20 @@
+<section class="panel panel--tight" aria-label="Spending breakdown">
+    <div class="panel__head panel__head--tight">
+        <h2>Spending this month</h2>
+        <span class="link-sm">KES {{ spending.total|default:"58,420" }}</span>
+    </div>
+    <ul class="breakdown">
+        {% for item in spending.categories %}
+        <li class="breakdown__row">
+            <div class="breakdown__label">
+                <span class="breakdown__dot" style="background:{{ item.colour }}"></span>
+                <span>{{ item.name }}</span>
+            </div>
+            <div class="breakdown__bar">
+                <span style="width:{{ item.percent }}%; background:{{ item.colour }}"></span>
+            </div>
+            <span class="breakdown__value">{{ item.percent }}%</span>
+        </li>
+        {% endfor %}
+    </ul>
+</section>

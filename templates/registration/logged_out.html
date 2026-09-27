@@ -1,0 +1,15 @@
+{% extends "auth_base.html" %}
+
+{% block title %}Signed out{% endblock %}
+{% block tagline %}See you soon.{% endblock %}
+
+{% block auth_content %}
+    <div class="auth-status">
+        <span class="auth-status__icon"><span class="icon" data-icon="check"></span></span>
+        <div class="auth-head">
+            <h2>You've been signed out</h2>
+            <p>For your security, always sign out fully on shared or public devices.</p>
+        </div>
+        <a href="{% url 'login' %}" class="btn btn--primary">Sign in again</a>
+    </div>
+{% endblock %}

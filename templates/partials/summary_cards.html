@@ -1,0 +1,31 @@
+<section class="cards" aria-label="Account summary">
+    <article class="card card--accent">
+        <p class="card__label">Total balance</p>
+        <p class="card__figure">KES {{ summary.total_balance|default:"482,650.00" }}</p>
+        <p class="card__sub card__sub--up">▲ {{ summary.balance_change|default:"2.4%" }} this month</p>
+    </article>
+
+    <article class="card">
+        <p class="card__label">Account number</p>
+        <p class="card__figure card__figure--mono">{{ summary.account_number|default:"0112 4483 6621" }}</p>
+        <p class="card__sub">{{ summary.account_type|default:"Premium current account" }}</p>
+    </article>
+
+    <article class="card">
+        <p class="card__label">Savings</p>
+        <p class="card__figure">KES {{ summary.savings_total|default:"156,200.00" }}</p>
+        <p class="card__sub">{{ summary.savings_goal|default:"3 active goals" }}</p>
+    </article>
+
+    <article class="card">
+        <p class="card__label">Loans outstanding</p>
+        <p class="card__figure">KES {{ summary.loans_total|default:"64,000.00" }}</p>
+        <p class="card__sub">Next instalment {{ summary.loan_due|default:"3 Oct 2026" }}</p>
+    </article>
+
+    <article class="card">
+        <p class="card__label">National ID</p>
+        <p class="card__figure card__figure--mono">{{ summary.national_id|default:"3xxxxx78" }}</p>
+        <p class="card__sub card__sub--verified">✓ Verified</p>
+    </article>
+</section>

@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+    <div class="profile-head">
+        <span class="profile-head__avatar">{{ profile.initials|default:"AW" }}</span>
+        <div class="profile-head__info">
+            <h2>{{ profile.full_name|default:"Amina Wanjiru" }}</h2>
+            <p>{{ profile.email|default:"amina.wanjiru@example.com" }} · Customer since {{ profile.member_since|default:"2022" }}</p>
+        </div>
+        <div class="profile-head__actions">
+            <a href="{% url 'accounts:profile-update' %}" class="btn btn--primary"><span class="icon" data-icon="edit"></span> Edit profile</a>
+        </div>
+    </div>
+
+    <section class="panel mb-16">
+        <div class="panel__head panel__head--tight">
+            <h2>Personal details</h2>
+        </div>
+        <dl class="detail-grid">
+            <div class="detail-item">
+                <dt>Full name</dt>
+                <dd>{{ profile.full_name|default:"Amina Wanjiru" }}</dd>
+            </div>
+            <div class="detail-item">
+                <dt>Email</dt>
+                <dd>{{ profile.email|default:"amina.wanjiru@example.com" }}</dd>
+            </div>
+            <div class="detail-item">
+                <dt>Phone number</dt>
+                <dd class="is-mono">{{ profile.phone|default:"+254 722 000 000" }}</dd>
+            </div>
+            <div class="detail-item">
+                <dt>National ID</dt>
+                <dd class="is-mono">{{ profile.national_id|default:"30021147" }}</dd>
+            </div>
+            <div class="detail-item">
+                <dt>Date of birth</dt>
+                <dd>{{ profile.date_of_birth|default:"14 May 1994" }}</dd>
+            </div>
+            <div class="detail-item">
+                <dt>Occupation</dt>
+                <dd>{{ profile.occupation|default:"Software developer" }}</dd>
+            </div>
+            <div class="detail-item">
+                <dt>Residential address</dt>
+                <dd>{{ profile.address|default:"Kilimani, Nairobi" }}</dd>
+            </div>
+            <div class="detail-item">
+                <dt>Next of kin</dt>
+                <dd>{{ profile.next_of_kin|default:"Not provided" }}</dd>
+            </div>
+        </dl>
+    </section>
+
+    <section class="danger-zone">
+        <div>
+            <strong>Delete your account</strong>
+            <p>This permanently closes your Jumla Bank account and cannot be undone. Outstanding balances and loans must be settled first.</p>
+        </div>
+        <a href="{% url 'accounts:account-deactivate' %}" class="btn btn--danger">Delete account</a>
+    </section>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "auth_base.html" %}
+
+{% block title %}Sign in{% endblock %}
+{% block tagline %}Welcome back.{% endblock %}
+
+{% block auth_content %}
+    <div class="auth-head">
+        <h2>Sign in</h2>
+        <p>New to Jumla Bank? <a href="{% url 'accounts:register' %}">Create an account</a></p>
+    </div>
+
+    <form class="auth-form" method="post" action="{% url 'accounts:login' %}">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <p class="field__error">{{ form.non_field_errors|join:" " }}</p>
+        {% endif %}
+
+        <label class="field" for="id_username">
+            <span>Username or email</span>
+            <input type="text" name="username" id="id_username" value="{{ form.username.value|default:'' }}" autocomplete="username" required autofocus>
+            {% if form.username.errors %}<span class="field__error">{{ form.username.errors|join:" " }}</span>{% endif %}
+        </label>
+
+        <label class="field" for="id_password">
+            <span>Password</span>
+            <div class="field__with-action">
+                <input type="password" name="password" id="id_password" autocomplete="current-password" required>
+                <button type="button" class="field__icon-btn" data-password-toggle="id_password" aria-label="Show password">
+                    <span class="icon" data-icon="eye"></span>
+                </button>
+            </div>
+            {% if form.password.errors %}<span class="field__error">{{ form.password.errors|join:" " }}</span>{% endif %}
+        </label>
+
+        <div class="auth-form__row">
+            <label class="field field--checkbox" for="id_remember">
+                <input type="checkbox" name="remember" id="id_remember">
+                <span>Keep me signed in</span>
+            </label>
+            <a href="{% url 'accounts:password-reset' %}">Forgot password?</a>
+        </div>
+
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" class="btn btn--primary btn--block">Sign in</button>
+    </form>
+
+    <p class="auth-foot">Protected by 2-factor authentication and device monitoring.</p>
+{% endblock %}

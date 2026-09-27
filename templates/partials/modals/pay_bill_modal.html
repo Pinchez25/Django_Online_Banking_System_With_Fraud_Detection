@@ -1,0 +1,36 @@
+<div class="modal" id="payBillModal" role="dialog" aria-modal="true" aria-labelledby="payBillModalTitle" hidden>
+    <div class="modal__panel">
+        <div class="modal__head">
+            <span class="modal__icon icon" data-icon="bill"></span>
+            <h2 id="payBillModalTitle">Pay a bill</h2>
+            <button class="modal__close" data-modal-close aria-label="Close">&times;</button>
+        </div>
+
+        <form class="modal__form" data-mock-submit data-success-message="Bill payment request received.">
+            <label class="field">
+                <span>Biller</span>
+                <select name="biller">
+                    <option>Kenya Power (KPLC)</option>
+                    <option>Nairobi Water</option>
+                    <option>DSTV</option>
+                    <option>Safaricom postpaid</option>
+                </select>
+            </label>
+            <label class="field">
+                <span>Account / meter number</span>
+                <input type="text" name="biller_account" placeholder="e.g. 33021147" required>
+            </label>
+            <label class="field">
+                <span>Amount (KES)</span>
+                <input type="number" name="amount" min="1" step="0.01" placeholder="0.00" required>
+            </label>
+
+            <p class="field__hint">This is a demo form using placeholder data — no funds will move.</p>
+
+            <div class="modal__actions">
+                <button type="button" class="btn btn--ghost" data-modal-close>Cancel</button>
+                <button type="submit" class="btn btn--primary">Pay bill</button>
+            </div>
+        </form>
+    </div>
+</div>

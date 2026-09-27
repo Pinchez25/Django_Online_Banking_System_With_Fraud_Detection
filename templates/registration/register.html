@@ -1,0 +1,71 @@
+{% extends "auth_base.html" %}
+
+{% block title %}Create your account{% endblock %}
+{% block tagline %}Open an account in minutes.{% endblock %}
+{% block brand_copy %}No paperwork, no branch visit. Verify your ID and you're ready to send your first transfer today.{% endblock %}
+
+{% block auth_content %}
+    <div class="auth-head">
+        <h2>Create your account</h2>
+        <p>Already banking with us? <a href="{% url 'login' %}">Sign in</a></p>
+    </div>
+
+    <form class="auth-form" method="post" action="{% url 'register' %}">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <p class="field__error">{{ form.non_field_errors|join:" " }}</p>
+        {% endif %}
+
+        <div class="field-row">
+            <label class="field" for="id_first_name">
+                <span>First name</span>
+                <input type="text" name="first_name" id="id_first_name" value="{{ form.first_name.value|default:'' }}" required autofocus>
+            </label>
+            <label class="field" for="id_last_name">
+                <span>Last name</span>
+                <input type="text" name="last_name" id="id_last_name" value="{{ form.last_name.value|default:'' }}" required>
+            </label>
+        </div>
+
+        <label class="field" for="id_email">
+            <span>Email</span>
+            <input type="email" name="email" id="id_email" value="{{ form.email.value|default:'' }}" autocomplete="email" required>
+            {% if form.email.errors %}<span class="field__error">{{ form.email.errors|join:" " }}</span>{% endif %}
+        </label>
+
+        <label class="field" for="id_national_id">
+            <span>National ID number</span>
+            <input type="text" name="national_id" id="id_national_id" placeholder="e.g. 30021147" required>
+        </label>
+
+        <label class="field" for="id_username">
+            <span>Username</span>
+            <input type="text" name="username" id="id_username" value="{{ form.username.value|default:'' }}" autocomplete="username" required>
+            {% if form.username.errors %}<span class="field__error">{{ form.username.errors|join:" " }}</span>{% endif %}
+        </label>
+
+        <label class="field" for="id_password1">
+            <span>Password</span>
+            <div class="field__with-action">
+                <input type="password" name="password1" id="id_password1" autocomplete="new-password" required>
+                <button type="button" class="field__icon-btn" data-password-toggle="id_password1" aria-label="Show password">
+                    <span class="icon" data-icon="eye"></span>
+                </button>
+            </div>
+            {% if form.password1.errors %}<span class="field__error">{{ form.password1.errors|join:" " }}</span>{% endif %}
+        </label>
+
+        <label class="field" for="id_password2">
+            <span>Confirm password</span>
+            <input type="password" name="password2" id="id_password2" autocomplete="new-password" required>
+            {% if form.password2.errors %}<span class="field__error">{{ form.password2.errors|join:" " }}</span>{% endif %}
+        </label>
+
+        <label class="field field--checkbox" for="id_terms">
+            <input type="checkbox" name="terms" id="id_terms" required>
+            <span>I agree to the Terms of Service and Privacy Policy</span>
+        </label>
+
+        <button type="submit" class="btn btn--primary btn--block">Create account</button>
+    </form>
+{% endblock %}

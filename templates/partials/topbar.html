@@ -1,0 +1,100 @@
+{% load static %}
+<header class="topbar">
+    <button class="topbar__burger" id="sidebarToggle" aria-label="Toggle menu" aria-controls="sidebar" aria-expanded="false">
+        <span></span><span></span><span></span>
+    </button>
+
+    <div class="topbar__greeting">
+        <h1>Hi, {{ user_data.first_name|default:"Amina" }}</h1>
+        <p>{{ today|default:"Sunday, 27 September 2026" }}</p>
+    </div>
+
+    <div class="topbar__actions">
+
+        <div class="popover" data-popover>
+            <button class="topbar__icon-btn" data-popover-trigger aria-haspopup="true" aria-expanded="false" aria-label="Alerts">
+                <span class="icon" data-icon="bell"></span>
+                {% if alerts %}<span class="badge">{{ alerts|length }}</span>{% endif %}
+            </button>
+            <div class="popover__panel" data-popover-panel>
+                <div class="popover__head">
+                    <span>Alerts</span>
+                    <a href="#">Mark all read</a>
+                </div>
+                <ul class="popover__list">
+                    {% for alert in alerts %}
+                    <li class="popover__item popover__item--{{ alert.level }}">
+                        <span class="popover__dot"></span>
+                        <div>
+                            <p class="popover__title">{{ alert.title }}</p>
+                            <p class="popover__meta">{{ alert.detail }} · {{ alert.time }}</p>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="popover__empty">You're all caught up.</li>
+                    {% endfor %}
+                </ul>
+                <a href="#" class="popover__foot">View alert centre</a>
+            </div>
+        </div>
+
+        <div class="popover" data-popover>
+            <button class="topbar__icon-btn" data-popover-trigger aria-haspopup="true" aria-expanded="false" aria-label="Messages">
+                <span class="icon" data-icon="mail"></span>
+                {% if messages_list %}<span class="badge">{{ messages_list|length }}</span>{% endif %}
+            </button>
+            <div class="popover__panel" data-popover-panel>
+                <div class="popover__head">
+                    <span>Messages</span>
+                    <a href="#">Mark all read</a>
+                </div>
+                <ul class="popover__list">
+                    {% for msg in messages_list %}
+                    <li class="popover__item">
+                        <span class="popover__avatar">{{ msg.sender|slice:":1" }}</span>
+                        <div>
+                            <p class="popover__title">{{ msg.sender }}</p>
+                            <p class="popover__meta">{{ msg.preview }} · {{ msg.time }}</p>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="popover__empty">No new messages.</li>
+                    {% endfor %}
+                </ul>
+                <a href="#" class="popover__foot">Open inbox</a>
+            </div>
+        </div>
+
+        <div class="popover" data-popover>
+            <button class="topbar__profile" data-popover-trigger aria-haspopup="true" aria-expanded="false">
+                <span class="topbar__avatar">{{ user_data.initials|default:"AW" }}</span>
+                <span class="topbar__profile-text">
+                    <strong>{{ user_data.full_name|default:"Amina Wanjiru" }}</strong>
+                    <small>{{ user_data.tier|default:"Gold member" }}</small>
+                </span>
+            </button>
+            <div class="popover__panel popover__panel--profile" data-popover-panel>
+                <ul class="popover__list">
+                    <li>
+                        <a href="{% url 'accounts:profile-detail' %}" class="popover__link">
+                            <span class="icon" data-icon="user"></span> Profile &amp; KYC
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{% url 'bank:settings' %}" class="popover__link">
+                            <span class="icon" data-icon="gear"></span> Settings
+                        </a>
+                    </li>
+                    <li>
+                        <form method="post" action="{% url 'accounts:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="popover__link popover__link--button">
+                                <span class="icon" data-icon="logout"></span> Sign out
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</header>

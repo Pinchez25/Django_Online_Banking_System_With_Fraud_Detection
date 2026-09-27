@@ -1,0 +1,47 @@
+{% load static %}
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar__brand">
+        <span class="sidebar__mark">J</span>
+        <span class="sidebar__name">Jumla Bank</span>
+    </div>
+
+    <nav class="sidebar__nav">
+        <p class="sidebar__group">Menu</p>
+        <a href="{% url 'bank:dashboard' %}" class="sidebar__link {% if request.resolver_match.url_name == 'dashboard' %}is-active{% endif %}">
+            <span class="sidebar__icon" data-icon="grid"></span> Overview
+        </a>
+        <a href="#" class="sidebar__link">
+            <span class="sidebar__icon" data-icon="swap"></span> Transactions
+        </a>
+        <a href="#" class="sidebar__link">
+            <span class="sidebar__icon" data-icon="card"></span> Cards
+        </a>
+        <a href="#" class="sidebar__link">
+            <span class="sidebar__icon" data-icon="wallet"></span> Loans
+        </a>
+        <a href="#" class="sidebar__link">
+            <span class="sidebar__icon" data-icon="chart"></span> Statements
+        </a>
+
+        <p class="sidebar__group">Account</p>
+        <a href="{% url 'accounts:profile-detail' %}" class="sidebar__link {% if request.resolver_match.url_name in 'profile,profile_edit,profile_delete' %}is-active{% endif %}">
+            <span class="sidebar__icon" data-icon="user"></span> Profile &amp; KYC
+        </a>
+        <a href="{% url 'bank:settings' %}#security" class="sidebar__link">
+            <span class="sidebar__icon" data-icon="shield"></span> Security
+        </a>
+        <a href="{% url 'bank:settings' %}" class="sidebar__link {% if request.resolver_match.url_name == 'settings' %}is-active{% endif %}">
+            <span class="sidebar__icon" data-icon="gear"></span> Settings
+        </a>
+    </nav>
+
+    <div class="sidebar__footer">
+        <form method="post" action="{% url 'accounts:logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="sidebar__link sidebar__link--muted sidebar__link--button">
+                <span class="sidebar__icon" data-icon="logout"></span> Sign out
+            </button>
+        </form>
+    </div>
+</aside>
+<div class="sidebar__scrim" id="sidebarScrim"></div>

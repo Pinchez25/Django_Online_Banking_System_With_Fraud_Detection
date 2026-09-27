@@ -1,0 +1,20 @@
+<section class="panel panel--tight" aria-label="Beneficiaries">
+    <div class="panel__head panel__head--tight">
+        <h2>Send again</h2>
+        <a href="#" class="link-sm">All beneficiaries</a>
+    </div>
+    <ul class="beneficiary-list">
+        {% for b in beneficiaries %}
+        <li class="beneficiary">
+            <span class="beneficiary__avatar">{{ b.name|slice:":1" }}</span>
+            <div class="beneficiary__info">
+                <p>{{ b.name }}</p>
+                <small>{{ b.bank }} · {{ b.masked_account }}</small>
+            </div>
+            <button class="beneficiary__send" data-modal-open="sendMoneyModal" aria-label="Send to {{ b.name }}">
+                <span class="icon" data-icon="send"></span>
+            </button>
+        </li>
+        {% endfor %}
+    </ul>
+</section>

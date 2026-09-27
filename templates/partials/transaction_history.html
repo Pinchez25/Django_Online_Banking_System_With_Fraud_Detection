@@ -1,0 +1,53 @@
+<section class="panel" aria-label="Transaction history">
+    <div class="panel__head">
+        <div>
+            <h2>Transaction history</h2>
+            <p class="panel__subtitle">{{ transactions|length }} transactions in the last 90 days</p>
+        </div>
+        <div class="panel__tools">
+            <label class="search" for="txnSearch">
+                <span class="icon" data-icon="search"></span>
+                <input type="search" id="txnSearch" placeholder="Search by reference, name or amount" autocomplete="off">
+            </label>
+            <button class="btn btn--ghost" id="exportCsv" type="button">
+                <span class="icon" data-icon="download"></span> Export
+            </button>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table class="table" id="txnTable">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Reference</th>
+                    <th>Type</th>
+                    <th class="table__num">Amount (KES)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                <tr>
+                    <td>{{ txn.date }}</td>
+                    <td>{{ txn.description }}</td>
+                    <td class="table__mono">{{ txn.reference }}</td>
+                    <td><span class="pill pill--{{ txn.type }}">{{ txn.type|title }}</span></td>
+                    <td class="table__num {% if txn.direction == 'credit' %}is-credit{% else %}is-debit{% endif %}">
+                        {% if txn.direction == 'credit' %}+{% else %}-{% endif %}{{ txn.amount }}
+                    </td>
+                    <td><span class="pill pill--{{ txn.status }}">{{ txn.status|title }}</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="table__empty">No transactions yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p class="table__no-results" id="noResults" hidden>No transactions match your search.</p>
+    </div>
+
+    <div class="panel__foot">
+        <button class="btn btn--text" type="button">Load more</button>
+    </div>
+</section>
