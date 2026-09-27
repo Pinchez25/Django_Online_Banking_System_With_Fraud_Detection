@@ -2,7 +2,9 @@ import secrets
 import uuid
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from accounts.models import Account
@@ -33,6 +35,12 @@ def generate_transaction_id():
 
 
 class Transaction(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", _("Pending approval")
+        APPROVED = "approved", _("Approved")
+        REJECTED = "rejected", _("Rejected")
+        FAILED = "failed", _("Failed")
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     transaction_id = models.CharField(
         _("Transaction ID"),
@@ -48,8 +56,30 @@ class Transaction(models.Model):
         related_name="transactions",
         verbose_name=_("Account"),
     )
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="received_transactions",
+        verbose_name=_("Recipient"),
+    )
     type = models.CharField(_("Type of Transaction"), max_length=1, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(_("Amount"), max_digits=12, decimal_places=2)
+    status = models.CharField(
+        _("Status"),
+        max_length=12,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_transactions",
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
     date = models.DateTimeField(auto_now_add=True, verbose_name=_("Date"))
 
     class Meta:
@@ -57,9 +87,50 @@ class Transaction(models.Model):
         indexes = [
             models.Index(fields=["account", "-date"], name="txn_account_date_idx"),
         ]
+        permissions = [("approve_transaction", "Can approve bank transactions")]
 
     def __str__(self):
         return self.transaction_id
+
+    def approve(self, approved_by=None):
+        if self.status != self.Status.PENDING:
+            raise ValueError("Only pending transactions can be approved.")
+
+        if approved_by is not None and not approved_by.has_perm("bank.approve_transaction"):
+            raise PermissionDenied("This user is not allowed to approve transactions.")
+
+        account = self.account
+
+        if self.type == "D":
+            account.bank_balances += self.amount
+            account.save(update_fields=["bank_balances"])
+        elif self.type == "W":
+            if self.amount > account.bank_balances:
+                self.status = self.Status.REJECTED
+                self.save(update_fields=["status"])
+                raise ValueError("The account does not have enough funds to complete this withdrawal.")
+            account.bank_balances -= self.amount
+            account.save(update_fields=["bank_balances"])
+        elif self.type == "T":
+            if self.recipient is None:
+                raise ValueError("Transfer recipient is missing.")
+            if account.bank_balances < self.amount:
+                self.status = self.Status.REJECTED
+                self.save(update_fields=["status"])
+                raise ValueError("The account does not have enough funds to complete this transfer.")
+            account.bank_balances -= self.amount
+            recipient = self.recipient
+            recipient.bank_balances += self.amount
+            account.save(update_fields=["bank_balances"])
+            recipient.save(update_fields=["bank_balances"])
+        else:
+            raise ValueError(f"Unsupported transaction type: {self.type}")
+
+        self.status = self.Status.APPROVED
+        self.approved_by = approved_by
+        self.approved_at = timezone.now()
+        self.save(update_fields=["status", "approved_by", "approved_at"])
+        return self
 
 
 class TransactionLog(models.Model):
