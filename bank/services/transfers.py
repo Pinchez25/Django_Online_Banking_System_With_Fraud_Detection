@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from decimal import Decimal
 
@@ -7,6 +8,8 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.db import transaction
+
+logger = logging.getLogger(__name__)
 
 from .fraud import FraudService
 from ..ml.detector import FraudModelUnavailable
@@ -96,6 +99,7 @@ class TransferService:
             if fraud.is_fraud:
                 payor.is_blocked = True
                 payor.save(update_fields=["is_blocked"])
+                logger.warning("Fraud transfer blocked: sender_id=%s receiver_id=%s probability=%s", payor.pk, beneficiary.pk, fraud.probability)
                 create_alert(
                     recipient=payor,
                     title="Transfer blocked",
@@ -109,27 +113,19 @@ class TransferService:
                     fraud_probability=fraud.probability,
                 )
             else:
-                payor.bank_balances -= amount
-                beneficiary.bank_balances += amount
-                payor.save(update_fields=["bank_balances"])
-                beneficiary.save(update_fields=["bank_balances"])
-
                 transfer = Transaction.objects.create(
                     account=payor,
+                    recipient=beneficiary,
                     type="T",
                     amount=amount,
+                    status=Transaction.Status.PENDING,
                 )
+                logger.info("Transfer request created: sender_id=%s receiver_id=%s transaction_id=%s", payor.pk, beneficiary.pk, transfer.transaction_id)
                 create_alert(
                     recipient=payor,
-                    title="Transfer sent",
-                    body=f"KES {amount:,.2f} was sent to {beneficiary.username}.",
-                    level="success",
-                )
-                create_alert(
-                    recipient=beneficiary,
-                    title="Transfer received",
-                    body=f"KES {amount:,.2f} was received from {payor.username}.",
-                    level="success",
+                    title="Transfer submitted for approval",
+                    body=f"KES {amount:,.2f} is pending approval before it is sent to {beneficiary.username}.",
+                    level="warning",
                 )
                 result = TransferResult(
                     transaction=transfer,

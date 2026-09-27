@@ -73,7 +73,7 @@ class TransferServiceTests(TestCase):
             bank_balances=Decimal("100.00"),
         )
 
-    def test_approved_transfer_moves_money_and_creates_transaction(self):
+    def test_transfer_creates_pending_transaction_until_approved(self):
         fraud_service = Mock()
         fraud_service.assess_transfer.return_value = FraudAssessment(
             result=FraudResult(
@@ -94,15 +94,51 @@ class TransferServiceTests(TestCase):
         self.assertFalse(result.fraud_detected)
         self.sender.refresh_from_db()
         self.receiver.refresh_from_db()
-        self.assertEqual(self.sender.bank_balances, Decimal("800.00"))
-        self.assertEqual(self.receiver.bank_balances, Decimal("300.00"))
-        self.assertEqual(Transaction.objects.filter(account=self.sender, type="T").count(), 1)
+        self.assertEqual(self.sender.bank_balances, Decimal("1000.00"))
+        self.assertEqual(self.receiver.bank_balances, Decimal("100.00"))
+        transfer = Transaction.objects.get(account=self.sender, type="T")
+        self.assertEqual(transfer.status, Transaction.Status.PENDING)
+        self.assertEqual(transfer.recipient_id, self.receiver.pk)
         self.assertEqual(TransactionLog.objects.count(), 1)
         self.assertFalse(TransactionLog.objects.get().is_fraud)
         self.assertEqual(
             Notification.objects.filter(kind=Notification.Kind.ALERT).count(),
-            2,
+            1,
         )
+
+    def test_manager_can_approve_transfer(self):
+        manager = Account.objects.create_user(
+            username="manager2",
+            email="manager2@example.com",
+            password="password",
+            national_id=10000005,
+        )
+        manager.user_permissions.add(Permission.objects.get(codename="approve_transaction"))
+
+        fraud_service = Mock()
+        fraud_service.assess_transfer.return_value = FraudAssessment(
+            result=FraudResult(
+                probability=0.01,
+                threshold=0.5,
+                model_version="1.0.0",
+                model_name="test",
+            ),
+            assessed_at=None,
+        )
+
+        result = TransferService(fraud_service=fraud_service).execute(
+            sender=self.sender,
+            receiver=self.receiver,
+            amount=Decimal("200.00"),
+        )
+        transfer = result.transaction
+
+        transfer.approve(approved_by=manager)
+        self.sender.refresh_from_db()
+        self.receiver.refresh_from_db()
+        self.assertEqual(self.sender.bank_balances, Decimal("800.00"))
+        self.assertEqual(self.receiver.bank_balances, Decimal("300.00"))
+        self.assertEqual(transfer.status, Transaction.Status.APPROVED)
 
     @override_settings(FRAUD_ALERT_EMAIL="alerts@example.com", DEFAULT_FROM_EMAIL="noreply@example.com")
     def test_fraud_blocks_account_and_keeps_audit_record(self):

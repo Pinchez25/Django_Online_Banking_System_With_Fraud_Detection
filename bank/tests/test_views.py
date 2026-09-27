@@ -103,7 +103,7 @@ class TestBankViews(TestCase):
 
         sender.refresh_from_db()
         recipient.refresh_from_db()
-        self.assertRedirects(response, reverse('account-blocked'))
+        self.assertRedirects(response, reverse('accounts:account-blocked'))
         self.assertTrue(sender.is_blocked)
         self.assertEqual(sender.bank_balances, 100)
         self.assertEqual(recipient.bank_balances, 50)

@@ -99,13 +99,15 @@ class DepositMoneyView(CreateTransactionMixin):
 
     def form_valid(self, form):
         try:
+            logger.info("Deposit form submitted by account_id=%s", self.request.user.pk)
             DepositService.execute(account=self.request.user, amount=form.cleaned_data["amount"])
         except MoneyOperationError as error:
+            logger.warning("Deposit failed for account_id=%s: %s", self.request.user.pk, str(error))
             form.add_error("amount", str(error))
             messages.error(self.request, "Error depositing money")
             return self.form_invalid(form)
 
-        messages.success(self.request, f"Ksh. {form.cleaned_data['amount']} was deposited to your account")
+        messages.success(self.request, "Your deposit request has been submitted for approval.")
         return redirect(self.get_success_url())
 
     def form_invalid(self, form):
@@ -118,17 +120,20 @@ class WithdrawMoneyView(CreateTransactionMixin):
 
     def form_valid(self, form):
         try:
+            logger.info("Withdrawal form submitted by account_id=%s", self.request.user.pk)
             WithdrawalService.execute(account=self.request.user, amount=form.cleaned_data["amount"])
         except InsufficientFundsError as error:
+            logger.warning("Withdrawal rejected for account_id=%s: %s", self.request.user.pk, str(error))
             form.add_error("amount", str(error))
             messages.error(self.request, "Error withdrawing money")
             return self.form_invalid(form)
         except MoneyOperationError as error:
+            logger.warning("Withdrawal failed for account_id=%s: %s", self.request.user.pk, str(error))
             form.add_error("amount", str(error))
             messages.error(self.request, "Error withdrawing money")
             return self.form_invalid(form)
 
-        messages.success(self.request, f"Ksh. {form.cleaned_data['amount']} was withdrawn from your account")
+        messages.success(self.request, "Your withdrawal request has been submitted for approval.")
         return redirect(self.get_success_url())
 
     def form_invalid(self, form):
@@ -141,35 +146,41 @@ class SendMoneyView(CreateTransactionMixin):
 
     def form_valid(self, form):
         try:
+            logger.info("Transfer form submitted by account_id=%s", self.request.user.pk)
             result = TransferService().execute(
                 sender=self.request.user,
                 receiver=form.cleaned_data["recipient"],
                 amount=form.cleaned_data["amount"],
             )
         except SelfTransferError as error:
+            logger.warning("Self-transfer rejected for account_id=%s: %s", self.request.user.pk, str(error))
             form.add_error("recipient", str(error))
             messages.error(self.request, "Error sending money")
             return self.form_invalid(form)
         except InsufficientFundsError as error:
+            logger.warning("Transfer rejected for account_id=%s: %s", self.request.user.pk, str(error))
             form.add_error("amount", str(error))
             messages.error(self.request, "Error sending money")
             return self.form_invalid(form)
         except AccountBlockedError as error:
+            logger.warning("Blocked transfer attempt by account_id=%s: %s", self.request.user.pk, str(error))
             messages.error(self.request, str(error))
             return self.form_invalid(form)
         except FraudModelError:
+            logger.exception("Fraud model failure during transfer for account_id=%s", self.request.user.pk)
             form.add_error("amount", "Fraud screening is unavailable. The transfer was not processed.")
             messages.error(self.request, "Error sending money")
             return self.form_invalid(form)
 
         if result.fraud_detected:
+            logger.warning("Fraud transfer blocked for account_id=%s", self.request.user.pk)
             messages.error(self.request, "The transfer was blocked by the fraud detection system.")
             logout(self.request)
-            return redirect("account-blocked")
+            return redirect("accounts:account-blocked")
 
         messages.success(
             self.request,
-            f"Ksh. {form.cleaned_data['amount']} was sent to {form.cleaned_data['recipient'].username}",
+            "Your transfer request has been submitted for approval.",
         )
         return redirect(self.get_success_url())
 
