@@ -26,7 +26,11 @@ CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv("CSRF_TRUSTED_ORI
 
 AUTH_USER_MODEL = 'accounts.Account'
 LOGIN_URL = reverse_lazy('accounts:login')
+LOGIN_REDIRECT_URL = reverse_lazy('bank:dashboard')
+
 INSTALLED_APPS = [
+    "daphne",
+    "channels",
     'baton',
     "django.contrib.admin",
     "django.contrib.auth",
@@ -37,20 +41,11 @@ INSTALLED_APPS = [
     'bank.apps.BankConfig',
     'accounts.apps.AccountsConfig',
     'django_browser_reload',
-    'crispy_forms',
-    'crispy_bootstrap5',
     'django_user_agents',
-    'axes',
     'preventconcurrentlogins',
-    'django_extensions',
     'baton.autodiscover',
 ]
-AXES_LOCKOUT_URL = reverse_lazy('account-locked')
 
-CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
-
-CRISPY_TEMPLATE_PACK = "bootstrap5"
-CRISPY_FAIL_SILENTLY = not DEBUG
 
 CACHES = {
     "default": {
@@ -64,7 +59,6 @@ USER_AGENTS_CACHE = 'default'
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django_session_timeout.middleware.SessionTimeoutMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -73,20 +67,19 @@ MIDDLEWARE = [
     "django_browser_reload.middleware.BrowserReloadMiddleware",
     'django_user_agents.middleware.UserAgentMiddleware',
     'preventconcurrentlogins.middleware.PreventConcurrentLoginsMiddleware',
-    'axes.middleware.AxesMiddleware',
 
 ]
-# DEFENDER_LOGIN_FAILURE_LIMIT = 3
-# DEFENDER_LOCKOUT_URL = '/locked/'
-# DEFENDER_REDIS_URL = 'redis://localhost:6379/0'
-AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
-# AXES_USE_USER_AGENT = True
+
 ROOT_URLCONF = "Online_Banking_System.urls"
 
 SESSION_EXPIRE_SECONDS = 300
 SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True
 SESSION_TIMEOUT_REDIRECT = reverse_lazy('accounts:login')
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# Keep the authentication cookie when the browser suspends or the user closes
+# a tab. The timeout middleware still expires inactive sessions after the
+# configured inactivity period.
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_COOKIE_AGE = SESSION_EXPIRE_SECONDS
 
 TEMPLATES = [
     {
@@ -116,6 +109,20 @@ MAXIMUM_WITHDRAW_AMOUNT = 1000000
 MINIMUM_DEPOSIT_AMOUNT = 10
 
 WSGI_APPLICATION = "Online_Banking_System.wsgi.application"
+ASGI_APPLICATION = "Online_Banking_System.asgi.application"
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [
+                os.getenv(
+                    "CHANNEL_REDIS_URL",
+                    os.getenv("REDIS_URL", "redis://127.0.0.1:6379/1"),
+                ),
+            ],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
@@ -149,7 +156,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator", },
 ]
 AUTHENTICATION_BACKENDS = [
-    'axes.backends.AxesStandaloneBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 # Internationalization
