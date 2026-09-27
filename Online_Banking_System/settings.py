@@ -1,25 +1,31 @@
 import os
 from pathlib import Path
 from datetime import datetime
+import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+from dotenv import load_dotenv
+from django.utils.translation import gettext_lazy as _
+from django.core.validators import MaxValueValidator
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 from django.urls import reverse_lazy
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY")
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "false").lower() in {"1", "true", "yes", "on"}
+SECRET_KEY = os.getenv("SECRET_KEY")
 
-ALLOWED_HOSTS = []
+
+ALLOWED_HOSTS = [host.strip() for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if host.strip()]
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if origin.strip()]
 
 AUTH_USER_MODEL = 'accounts.Account'
-LOGIN_URL = reverse_lazy('login')
+LOGIN_URL = reverse_lazy('accounts:login')
 INSTALLED_APPS = [
     'baton',
     "django.contrib.admin",
@@ -33,7 +39,6 @@ INSTALLED_APPS = [
     'django_browser_reload',
     'crispy_forms',
     'crispy_bootstrap5',
-    'captcha',
     'django_user_agents',
     'axes',
     'preventconcurrentlogins',
@@ -43,21 +48,17 @@ INSTALLED_APPS = [
 AXES_LOCKOUT_URL = reverse_lazy('account-locked')
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
-RECAPTCHA_PUBLIC_KEY = os.environ.get('RECAPTCHA_PUBLIC_KEY')
-RECAPTCHA_PRIVATE_KEY = os.environ.get('RECAPTCHA_PRIVATE_KEY')
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 CRISPY_FAIL_SILENTLY = not DEBUG
 
 CACHES = {
     "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0"),
     }
 }
+
 USER_AGENTS_CACHE = 'default'
 
 MIDDLEWARE = [
@@ -78,13 +79,13 @@ MIDDLEWARE = [
 # DEFENDER_LOGIN_FAILURE_LIMIT = 3
 # DEFENDER_LOCKOUT_URL = '/locked/'
 # DEFENDER_REDIS_URL = 'redis://localhost:6379/0'
-AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
 # AXES_USE_USER_AGENT = True
 ROOT_URLCONF = "Online_Banking_System.urls"
 
 SESSION_EXPIRE_SECONDS = 300
 SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True
-SESSION_TIMEOUT_REDIRECT = reverse_lazy('login')
+SESSION_TIMEOUT_REDIRECT = reverse_lazy('accounts:login')
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 
 TEMPLATES = [
@@ -119,23 +120,22 @@ WSGI_APPLICATION = "Online_Banking_System.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
-
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "bank",
-        "USER": "postgres",
-        "PASSWORD": "1234",
-        "HOST": "localhost",
-        "PORT": "5432",
-    }
+    "default": dj_database_url.config(
+        default=f"postgresql://{os.getenv('POSTGRES_USER', 'postgres')}:{os.getenv('POSTGRES_PASSWORD', '')}@{os.getenv('POSTGRES_HOST', 'localhost')}:{os.getenv('POSTGRES_PORT', '5432')}/{os.getenv('POSTGRES_DB', 'bank')}",
+        conn_max_age=int(os.getenv("DB_CONN_MAX_AGE", "60")),
+    )
 }
+
+LOCAL_MODEL_PATH = (
+    BASE_DIR
+    / "dataset and notebook"
+    / "models"
+    / "fraud_detection_pipeline.joblib"
+)
+
+FRAUD_MODEL_SOURCE = os.getenv("MODEL_PATH") or LOCAL_MODEL_PATH
+FRAUD_ALERT_EMAIL = ""
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -163,13 +163,12 @@ USE_I18N = True
 
 USE_TZ = False
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-# EMAIL_HOST = "smtp.gmail.com"
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = os.environ.get('HOST_EMAIL')
-# EMAIL_HOST_PASSWORD = os.environ.get('HOST_EMAIL_PASSWORD')
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ["EMAIL_HOST"]
+EMAIL_PORT = int(os.environ["EMAIL_PORT"])
+EMAIL_USE_TLS = os.environ["EMAIL_USE_TLS"].lower() == "true"
+EMAIL_HOST_USER = os.environ["EMAIL_HOST_USER"]
+EMAIL_HOST_PASSWORD = os.environ["EMAIL_HOST_PASSWORD"]
 
 BATON = {
     'SITE_HEADER': 'Online Bank',
