@@ -7,33 +7,36 @@
     <title>{% block title %}Sign in{% endblock %} · Jumla Bank</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+          rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
     <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+    <link rel="stylesheet" href="{% static 'css/messages.css' %}">
 </head>
 <body class="auth-body">
-    {% include "partials/icons.html" %}
+{% include "partials/icons.html" %}
 
-    <div class="auth">
-        <aside class="auth__brand">
-            <div class="auth__brand-inner">
-                <div class="sidebar__mark auth__mark">J</div>
-                <p class="auth__brand-name">Jumla Bank</p>
-                <h1 class="auth__tagline">{% block tagline %}Banking that keeps pace with you.{% endblock %}</h1>
-                <p class="auth__brand-copy">{% block brand_copy %}Move money, track spending and manage loans from one account — built for how you actually bank.{% endblock %}</p>
-            </div>
-            <p class="auth__brand-foot">&copy; {{ current_year|default:"2026" }} Jumla Bank. Registered in Kenya.</p>
-        </aside>
+<div class="auth">
+    <aside class="auth__brand">
+        <div class="auth__brand-inner">
+            <div class="sidebar__mark auth__mark">J</div>
+            <p class="auth__brand-name">Jumla Bank</p>
+            <h1 class="auth__tagline">{% block tagline %}Banking that keeps pace with you.{% endblock %}</h1>
+            <p class="auth__brand-copy">{% block brand_copy %}Move money, track spending and manage loans from one
+                account — built for how you actually bank.{% endblock %}</p>
+        </div>
+        <p class="auth__brand-foot">&copy; {{ current_year|default:"2026" }} Jumla Bank. Registered in Kenya.</p>
+    </aside>
 
-        <main class="auth__panel">
-            <div class="auth__card">
-                {% include "partials/messages.html" %}
-                {% block auth_content %}{% endblock %}
-            </div>
-        </main>
-    </div>
+    <main class="auth__panel">
+        <div class="auth__card">
+            {% include "partials/messages.html" %}
+            {% block auth_content %}{% endblock %}
+        </div>
+    </main>
+</div>
 
-    <script src="{% static 'js/dashboard.js' %}" defer></script>
-    {% block extra_js %}{% endblock %}
+<script src="{% static 'js/dashboard.js' %}" defer></script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>

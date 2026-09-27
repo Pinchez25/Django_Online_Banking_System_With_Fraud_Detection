@@ -8,13 +8,13 @@
     {% include "partials/quick_actions.html" %}
 
     <div class="content__split">
-        <div class="content__main">
-            {% include "partials/transaction_history.html" %}
-        </div>
         <div class="content__side">
             {% include "partials/linked_cards.html" %}
             {% include "partials/spending_breakdown.html" %}
             {% include "partials/beneficiaries.html" %}
+        </div>
+        <div class="content__main">
+            {% include "partials/transaction_history.html" %}
         </div>
     </div>
 {% endblock %}

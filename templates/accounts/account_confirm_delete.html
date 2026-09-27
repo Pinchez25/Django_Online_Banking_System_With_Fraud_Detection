@@ -8,19 +8,23 @@
     <section class="panel panel--narrow">
         <div class="settings__section-head">
             <h3>Deactivate your account</h3>
-            <p>This will deactivate your account. You will be able to reactivate it later if needed.</p>
+            <p>You will be signed out and will no longer be able to sign in. Your account and banking records will be retained.</p>
         </div>
 
         <form method="post" class="auth-form mb-16">
             {% csrf_token %}
-            <label class="field" for="id_confirm_password">
-                <span>Confirm your password to continue</span>
-                <input type="password" name="password" id="id_confirm_password" required autocomplete="current-password">
-            </label>
-            <label class="field field--checkbox" for="id_confirm_deactivate">
-                <input type="checkbox" name="confirm" id="id_confirm_deactivate" required>
-                <span>I understand this action will deactivate my account</span>
-            </label>
+            {% for field in form %}
+                <label class="field{% if field.name == 'confirm' %} field--checkbox{% endif %}" for="{{ field.id_for_label }}">
+                    {% if field.name == 'confirm' %}
+                        {{ field }}
+                        <span>{{ field.label }}</span>
+                    {% else %}
+                        <span>{{ field.label }}</span>
+                        {{ field }}
+                    {% endif %}
+                    {% for error in field.errors %}<span class="field__error">{{ error }}</span>{% endfor %}
+                </label>
+            {% endfor %}
 
             <div class="modal__actions actions--start">
                 <button type="submit" class="btn btn--danger">Deactivate account</button>

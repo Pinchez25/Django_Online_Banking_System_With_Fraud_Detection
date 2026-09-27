@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<section class="notification-center">
+    <header class="notification-center__header">
+        <div>
+            <h1>Notifications</h1>
+            <p>Account alerts and messages from Kwetu Bank.</p>
+        </div>
+        <form method="post" action="{% url 'bank:notifications-read-all' %}">
+            {% csrf_token %}
+            {% if active_notification_kind %}<input type="hidden" name="kind" value="{{ active_notification_kind }}">{% endif %}
+            <button class="btn btn--ghost" type="submit">Mark all read</button>
+        </form>
+    </header>
+
+    <nav class="notification-center__filters" aria-label="Notification type">
+        <a href="{% url 'bank:notification-center' %}" {% if not active_notification_kind %}aria-current="page"{% endif %}>All</a>
+        <a href="{% url 'bank:notification-center' %}?kind=alert" {% if active_notification_kind == "alert" %}aria-current="page"{% endif %}>Alerts</a>
+        <a href="{% url 'bank:notification-center' %}?kind=message" {% if active_notification_kind == "message" %}aria-current="page"{% endif %}>Messages</a>
+    </nav>
+
+    <ul class="notification-center__list">
+        {% for notification in notifications %}
+        <li class="notification-center__item{% if not notification.read_at %} is-unread{% endif %}">
+            <div class="notification-center__copy">
+                <div class="notification-center__title-row">
+                    <h2>{{ notification.title }}</h2>
+                    <span>{{ notification.get_kind_display }}</span>
+                </div>
+                <p>{{ notification.body|linebreaksbr }}</p>
+                <time datetime="{{ notification.created_at|date:'c' }}">{{ notification.created_at|date:"j M Y, H:i" }}</time>
+            </div>
+            {% if not notification.read_at %}
+            <form method="post" action="{% url 'bank:notification-read' notification.pk %}">
+                {% csrf_token %}
+                <button class="btn btn--ghost" type="submit">Mark read</button>
+            </form>
+            {% endif %}
+        </li>
+        {% empty %}
+        <li class="notification-center__empty">No notifications to show.</li>
+        {% endfor %}
+    </ul>
+
+    {% if is_paginated %}
+    <nav class="notification-center__pagination" aria-label="Pagination">
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if active_notification_kind %}&amp;kind={{ active_notification_kind }}{% endif %}">Previous</a>{% endif %}
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if active_notification_kind %}&amp;kind={{ active_notification_kind }}{% endif %}">Next</a>{% endif %}
+    </nav>
+    {% endif %}
+</section>
+{% endblock %}

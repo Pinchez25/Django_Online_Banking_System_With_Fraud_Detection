@@ -7,31 +7,34 @@
     <title>{% block title %}Overview{% endblock %} · Jumla Bank</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+          rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/messages.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    {% include "partials/icons.html" %}
+{% include "partials/icons.html" %}
 
-    <div class="shell">
-        {% include "partials/sidebar.html" %}
+<div class="shell">
+    {% include "partials/sidebar.html" %}
 
-        <div class="shell__main">
-            {% include "partials/topbar.html" %}
+    <div class="shell__main">
+        {% include "partials/topbar.html" %}
 
-            <main class="content">
-                {% include "partials/messages.html" %}
-                {% block content %}{% endblock %}
-            </main>
+        <main class="content">
+            {% include "partials/messages.html" %}
+            {% block content %}{% endblock %}
+        </main>
 
-            {% include "partials/footer.html" %}
-        </div>
+        {% include "partials/footer.html" %}
     </div>
+</div>
 
-    {% block modals %}{% endblock %}
+{% block modals %}{% endblock %}
 
-    <script src="{% static 'js/dashboard.js' %}" defer></script>
-    {% block extra_js %}{% endblock %}
+<script src="{% static 'js/dashboard.js' %}" defer></script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>

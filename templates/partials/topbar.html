@@ -1,12 +1,13 @@
-{% load static %}
-<header class="topbar">
+{% load static account_tags %}
+{% topbar_user_data as user_data %}
+<header class="topbar" data-notification-socket="/ws/notifications/">
     <button class="topbar__burger" id="sidebarToggle" aria-label="Toggle menu" aria-controls="sidebar" aria-expanded="false">
         <span></span><span></span><span></span>
     </button>
 
     <div class="topbar__greeting">
-        <h1>Hi, {{ user_data.first_name|default:"Amina" }}</h1>
-        <p>{{ today|default:"Sunday, 27 September 2026" }}</p>
+        <h1>{% if user.is_authenticated %}Hi, {{ user_data.first_name }}{% else %}Welcome{% endif %}</h1>
+        <p>{% if today %}{{ today }}{% else %}{% now "l, d F Y" %}{% endif %}</p>
     </div>
 
     <div class="topbar__actions">
@@ -14,63 +15,79 @@
         <div class="popover" data-popover>
             <button class="topbar__icon-btn" data-popover-trigger aria-haspopup="true" aria-expanded="false" aria-label="Alerts">
                 <span class="icon" data-icon="bell"></span>
-                {% if alerts %}<span class="badge">{{ alerts|length }}</span>{% endif %}
+                <span class="badge" data-notification-count="alert"{% if not alerts_unread_count %} hidden{% endif %}>{{ alerts_unread_count }}</span>
             </button>
             <div class="popover__panel" data-popover-panel>
                 <div class="popover__head">
                     <span>Alerts</span>
-                    <a href="#">Mark all read</a>
+                    <form method="post" action="{% url 'bank:notifications-read-all' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="kind" value="alert">
+                        <button type="submit">Mark all read</button>
+                    </form>
                 </div>
-                <ul class="popover__list">
+                <ul class="popover__list" data-notification-list="alert">
                     {% for alert in alerts %}
-                    <li class="popover__item popover__item--{{ alert.level }}">
+                    <li class="popover__item popover__item--{{ alert.level }}" data-notification-id="{{ alert.pk }}">
                         <span class="popover__dot"></span>
                         <div>
                             <p class="popover__title">{{ alert.title }}</p>
-                            <p class="popover__meta">{{ alert.detail }} · {{ alert.time }}</p>
+                            <p class="popover__meta">{{ alert.body|truncatechars:90 }} · {{ alert.created_at|timesince }} ago</p>
                         </div>
+                        <form method="post" action="{% url 'bank:notification-read' alert.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="popover__item-action" aria-label="Mark {{ alert.title }} as read">Mark read</button>
+                        </form>
                     </li>
                     {% empty %}
                     <li class="popover__empty">You're all caught up.</li>
                     {% endfor %}
                 </ul>
-                <a href="#" class="popover__foot">View alert centre</a>
+                <a href="{% url 'bank:notification-center' %}?kind=alert" class="popover__foot">View alert centre</a>
             </div>
         </div>
 
         <div class="popover" data-popover>
             <button class="topbar__icon-btn" data-popover-trigger aria-haspopup="true" aria-expanded="false" aria-label="Messages">
                 <span class="icon" data-icon="mail"></span>
-                {% if messages_list %}<span class="badge">{{ messages_list|length }}</span>{% endif %}
+                <span class="badge" data-notification-count="message"{% if not messages_unread_count %} hidden{% endif %}>{{ messages_unread_count }}</span>
             </button>
             <div class="popover__panel" data-popover-panel>
                 <div class="popover__head">
                     <span>Messages</span>
-                    <a href="#">Mark all read</a>
+                    <form method="post" action="{% url 'bank:notifications-read-all' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="kind" value="message">
+                        <button type="submit">Mark all read</button>
+                    </form>
                 </div>
-                <ul class="popover__list">
+                <ul class="popover__list" data-notification-list="message">
                     {% for msg in messages_list %}
-                    <li class="popover__item">
-                        <span class="popover__avatar">{{ msg.sender|slice:":1" }}</span>
+                    <li class="popover__item" data-notification-id="{{ msg.pk }}">
+                        <span class="popover__avatar">{{ msg.sender_name|slice:":1" }}</span>
                         <div>
-                            <p class="popover__title">{{ msg.sender }}</p>
-                            <p class="popover__meta">{{ msg.preview }} · {{ msg.time }}</p>
+                            <p class="popover__title">{{ msg.title }}</p>
+                            <p class="popover__meta">{{ msg.sender_name }} · {{ msg.body|truncatechars:65 }} · {{ msg.created_at|timesince }} ago</p>
                         </div>
+                        <form method="post" action="{% url 'bank:notification-read' msg.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="popover__item-action" aria-label="Mark {{ msg.title }} as read">Mark read</button>
+                        </form>
                     </li>
                     {% empty %}
                     <li class="popover__empty">No new messages.</li>
                     {% endfor %}
                 </ul>
-                <a href="#" class="popover__foot">Open inbox</a>
+                <a href="{% url 'bank:notification-center' %}?kind=message" class="popover__foot">Open inbox</a>
             </div>
         </div>
 
         <div class="popover" data-popover>
             <button class="topbar__profile" data-popover-trigger aria-haspopup="true" aria-expanded="false">
-                <span class="topbar__avatar">{{ user_data.initials|default:"AW" }}</span>
+                <span class="topbar__avatar">{% if user.is_authenticated %}{{ user_data.initials }}{% else %}?{% endif %}</span>
                 <span class="topbar__profile-text">
-                    <strong>{{ user_data.full_name|default:"Amina Wanjiru" }}</strong>
-                    <small>{{ user_data.tier|default:"Gold member" }}</small>
+                    <strong>{% if user.is_authenticated %}{{ user_data.full_name }}{% else %}Guest{% endif %}</strong>
+                    <small>{% if user.is_authenticated %}{{ user_data.tier }}{% else %}Not signed in{% endif %}</small>
                 </span>
             </button>
             <div class="popover__panel popover__panel--profile" data-popover-panel>

@@ -7,10 +7,10 @@
 {% block auth_content %}
     <div class="auth-head">
         <h2>Create your account</h2>
-        <p>Already banking with us? <a href="{% url 'login' %}">Sign in</a></p>
+        <p>Already banking with us? <a href="{% url 'accounts:login' %}">Sign in</a></p>
     </div>
 
-    <form class="auth-form" method="post" action="{% url 'register' %}">
+    <form class="auth-form" method="post" action="{% url 'accounts:register' %}">
         {% csrf_token %}
         {% if form.non_field_errors %}
             <p class="field__error">{{ form.non_field_errors|join:" " }}</p>

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{% if is_edit %}Edit profile{% else %}Complete your profile{% endif %}{% endblock %}
+{% block title %}{% if is_profile_form %}Edit profile{% else %}Edit account details{% endif %}{% endblock %}
 
 {% block content %}
     <a href="{% url 'accounts:profile-detail' %}" class="auth-back"><span class="icon" data-icon="arrow-left"></span> Back to profile</a>
@@ -8,59 +8,56 @@
     <section class="panel">
         <div class="panel__head panel__head--tight">
             <div>
-                <h2>{% if is_edit %}Edit profile{% else %}Complete your profile{% endif %}</h2>
-                <p class="panel__subtitle">Keep your KYC details current — this is what appears on your statements.</p>
+                <h2>{% if is_profile_form %}Edit profile{% else %}Edit account details{% endif %}</h2>
+                <p class="panel__subtitle">{% if is_profile_form %}Keep your contact and address details current.{% else %}Keep your sign-in and account details current.{% endif %}</p>
             </div>
         </div>
 
-        <form method="post" class="form-grid">
+        <form method="post" enctype="multipart/form-data" class="form-grid">
             {% csrf_token %}
+            {{ form.non_field_errors }}
+            {% for field in form %}
+                <label class="field{% if field.name == 'address' %} field--full{% endif %}" for="{{ field.id_for_label }}">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% for error in field.errors %}<span class="field__error">{{ error }}</span>{% endfor %}
+                </label>
+            {% endfor %}
 
-            <label class="field">
-                <span>First name</span>
-                <input type="text" name="first_name" value="{{ profile.first_name|default:'Amina' }}" required>
-            </label>
-            <label class="field">
-                <span>Last name</span>
-                <input type="text" name="last_name" value="{{ profile.last_name|default:'Wanjiru' }}" required>
-            </label>
-
-            <label class="field">
-                <span>Email</span>
-                <input type="email" name="email" value="{{ profile.email|default:'amina.wanjiru@example.com' }}" required>
-            </label>
-            <label class="field">
-                <span>Phone number</span>
-                <input type="tel" name="phone" value="{{ profile.phone|default:'+254 722 000 000' }}" required>
-            </label>
-
-            <label class="field">
-                <span>National ID number</span>
-                <input type="text" name="national_id" value="{{ profile.national_id|default:'30021147' }}" required>
-            </label>
-            <label class="field">
-                <span>Date of birth</span>
-                <input type="date" name="date_of_birth" value="{{ profile.date_of_birth_iso|default:'1994-05-14' }}" required>
-            </label>
-
-            <label class="field">
-                <span>Occupation</span>
-                <input type="text" name="occupation" value="{{ profile.occupation|default:'Software developer' }}">
-            </label>
-            <label class="field">
-                <span>Next of kin</span>
-                <input type="text" name="next_of_kin" value="{{ profile.next_of_kin|default:'' }}" placeholder="Full name">
-            </label>
-
-            <label class="field field--full">
-                <span>Residential address</span>
-                <input type="text" name="address" value="{{ profile.address|default:'Kilimani, Nairobi' }}" required>
-            </label>
-
-            <label class="field field--full">
-                <span>Profile photo</span>
-                <input type="file" name="avatar" accept="image/*">
-            </label>
+            {% if is_profile_form %}
+            <section class="field--full">
+                <h3>Next of kin</h3>
+                <p class="panel__subtitle">Add one or more people we can contact on your behalf.</p>
+                {{ next_of_kin_formset.management_form }}
+                {{ next_of_kin_formset.non_form_errors }}
+                <div id="next-of-kin-forms" class="form-grid">
+                    {% for kin_form in next_of_kin_formset %}
+                        <div class="form-grid field--full next-of-kin-entry">
+                            {% for hidden in kin_form.hidden_fields %}{{ hidden }}{% endfor %}
+                            {% for field in kin_form.visible_fields %}
+                                <label class="field" for="{{ field.id_for_label }}">
+                                    <span>{{ field.label }}</span>
+                                    {{ field }}
+                                    {% for error in field.errors %}<span class="field__error">{{ error }}</span>{% endfor %}
+                                </label>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <template id="next-of-kin-empty-form">
+                    <div class="form-grid field--full next-of-kin-entry">
+                        {% for hidden in next_of_kin_formset.empty_form.hidden_fields %}{{ hidden }}{% endfor %}
+                        {% for field in next_of_kin_formset.empty_form.visible_fields %}
+                            <label class="field" for="{{ field.id_for_label }}">
+                                <span>{{ field.label }}</span>
+                                {{ field }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </template>
+                <button type="button" id="add-next-of-kin" class="btn btn--ghost">Add another</button>
+            </section>
+            {% endif %}
 
             <div class="modal__actions actions--start field--full">
                 <button type="submit" class="btn btn--primary">Save changes</button>
@@ -68,4 +65,20 @@
             </div>
         </form>
     </section>
+{% endblock %}
+
+{% block extra_js %}
+    {% if is_profile_form %}
+    <script>
+        const kinForms = document.getElementById("next-of-kin-forms");
+        const totalForms = document.getElementById("id_next_of_kin-TOTAL_FORMS");
+        const emptyKinForm = document.getElementById("next-of-kin-empty-form");
+
+        document.getElementById("add-next-of-kin").addEventListener("click", () => {
+            const formIndex = Number(totalForms.value);
+            kinForms.insertAdjacentHTML("beforeend", emptyKinForm.innerHTML.replaceAll("__prefix__", formIndex));
+            totalForms.value = formIndex + 1;
+        });
+    </script>
+    {% endif %}
 {% endblock %}

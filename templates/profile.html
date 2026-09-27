@@ -4,13 +4,14 @@
 
 {% block content %}
     <div class="profile-head">
-        <span class="profile-head__avatar">{{ profile.initials|default:"AW" }}</span>
+        <span class="profile-head__avatar">{% if profile.first_name or profile.last_name %}{{ profile.first_name|first|upper }}{{ profile.last_name|first|upper }}{% else %}{{ account.username|first|upper }}{% endif %}</span>
         <div class="profile-head__info">
-            <h2>{{ profile.full_name|default:"Amina Wanjiru" }}</h2>
-            <p>{{ profile.email|default:"amina.wanjiru@example.com" }} · Customer since {{ profile.member_since|default:"2022" }}</p>
+            <h2>{% if profile.first_name or profile.last_name %}{{ profile.first_name }}{% if profile.first_name and profile.last_name %} {% endif %}{{ profile.last_name }}{% else %}N/A{% endif %}</h2>
+            <p>{{ account.email|default:"N/A" }} · Customer since {{ account.date_joined|date:"Y" }}</p>
         </div>
         <div class="profile-head__actions">
             <a href="{% url 'accounts:profile-update' %}" class="btn btn--primary"><span class="icon" data-icon="edit"></span> Edit profile</a>
+            <a href="{% url 'accounts:account-update' %}" class="btn btn--ghost">Edit account details</a>
         </div>
     </div>
 
@@ -21,44 +22,55 @@
         <dl class="detail-grid">
             <div class="detail-item">
                 <dt>Full name</dt>
-                <dd>{{ profile.full_name|default:"Amina Wanjiru" }}</dd>
+                <dd>{% if profile.first_name or profile.last_name %}{{ profile.first_name }}{% if profile.first_name and profile.last_name %} {% endif %}{{ profile.last_name }}{% else %}N/A{% endif %}</dd>
             </div>
             <div class="detail-item">
                 <dt>Email</dt>
-                <dd>{{ profile.email|default:"amina.wanjiru@example.com" }}</dd>
+                <dd>{{ account.email|default:"N/A" }}</dd>
             </div>
             <div class="detail-item">
                 <dt>Phone number</dt>
-                <dd class="is-mono">{{ profile.phone|default:"+254 722 000 000" }}</dd>
+                <dd class="is-mono">{{ profile.phone_number|default:"N/A" }}</dd>
             </div>
             <div class="detail-item">
                 <dt>National ID</dt>
-                <dd class="is-mono">{{ profile.national_id|default:"30021147" }}</dd>
-            </div>
-            <div class="detail-item">
-                <dt>Date of birth</dt>
-                <dd>{{ profile.date_of_birth|default:"14 May 1994" }}</dd>
-            </div>
-            <div class="detail-item">
-                <dt>Occupation</dt>
-                <dd>{{ profile.occupation|default:"Software developer" }}</dd>
+                <dd class="is-mono">{{ account.national_id|default:"N/A" }}</dd>
             </div>
             <div class="detail-item">
                 <dt>Residential address</dt>
-                <dd>{{ profile.address|default:"Kilimani, Nairobi" }}</dd>
+                <dd>{% if profile.address or profile.city %}{{ profile.address }}{% if profile.address and profile.city %}, {% endif %}{{ profile.city }}{% else %}Not provided{% endif %}</dd>
             </div>
             <div class="detail-item">
-                <dt>Next of kin</dt>
-                <dd>{{ profile.next_of_kin|default:"Not provided" }}</dd>
+                <dt>Postal code</dt>
+                <dd>{{ profile.postal_code|default:"N/A" }}</dd>
             </div>
+        </dl>
+    </section>
+
+    <section class="panel mb-16">
+        <div class="panel__head panel__head--tight">
+            <h2>Next of kin</h2>
+        </div>
+        <dl class="detail-grid">
+            {% for kin in profile.next_of_kin.all %}
+                <div class="detail-item">
+                    <dt>{{ kin.full_name }} · {{ kin.get_relationship_display }}</dt>
+                    <dd>{{ kin.phone_number }}{% if kin.email %} · {{ kin.email }}{% endif %}</dd>
+                </div>
+            {% empty %}
+                <div class="detail-item">
+                    <dt>Next of kin</dt>
+                    <dd>Not provided</dd>
+                </div>
+            {% endfor %}
         </dl>
     </section>
 
     <section class="danger-zone">
         <div>
-            <strong>Delete your account</strong>
-            <p>This permanently closes your Jumla Bank account and cannot be undone. Outstanding balances and loans must be settled first.</p>
+            <strong>Deactivate your account</strong>
+            <p>You will no longer be able to sign in. Your account and banking records will be retained.</p>
         </div>
-        <a href="{% url 'accounts:account-deactivate' %}" class="btn btn--danger">Delete account</a>
+        <a href="{% url 'accounts:account-deactivate' %}" class="btn btn--danger">Deactivate account</a>
     </section>
 {% endblock %}
