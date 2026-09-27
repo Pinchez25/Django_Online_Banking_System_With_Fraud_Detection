@@ -1,47 +1,100 @@
-import random
-import string
+import secrets
+import uuid
 
+from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+
 from accounts.models import Account
-from django.conf import settings
 
 TRANSACTION_TYPES = (
-    ('D', 'Deposit'),
-    ('W', 'Withdrawal'),
-    ('T', 'Transfer'),
+    ("D", "Deposit"),
+    ("W", "Withdrawal"),
+    ("T", "Transfer"),
 )
 
+# Crockford-style Base32 alphabet: excludes ambiguous characters such as 0/O and 1/I.
+TRANSACTION_REFERENCE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+TRANSACTION_REFERENCE_LENGTH = 10
 
-# function to generate unique transaction id
-def generate_unique_id():
-    return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(16))
+
+def generate_transaction_id():
+    """Generate a short, opaque, cryptographically random transaction reference.
+
+    Ten Base32 characters provide 50 bits of randomness while remaining short enough
+    for a customer-facing transaction code. The database UNIQUE constraint is the
+    final authority on uniqueness; generation is intentionally independent of
+    transaction volume and does not expose an account's transaction count.
+    """
+    return "".join(
+        secrets.choice(TRANSACTION_REFERENCE_ALPHABET)
+        for _ in range(TRANSACTION_REFERENCE_LENGTH)
+    )
 
 
 class Transaction(models.Model):
-    transaction_id = models.CharField(max_length=16, default=generate_unique_id, unique=True,
-                                      verbose_name=_("Transaction ID"))
-    account = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_("Account"))
-    type = models.CharField(_('Type of Transaction'), max_length=1, choices=TRANSACTION_TYPES)
-    amount = models.DecimalField(_('Amount'), max_digits=12, decimal_places=2)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    transaction_id = models.CharField(
+        _("Transaction ID"),
+        max_length=TRANSACTION_REFERENCE_LENGTH,
+        default=generate_transaction_id,
+        unique=True,
+        editable=False,
+        db_index=True,
+    )
+    account = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="transactions",
+        verbose_name=_("Account"),
+    )
+    type = models.CharField(_("Type of Transaction"), max_length=1, choices=TRANSACTION_TYPES)
+    amount = models.DecimalField(_("Amount"), max_digits=12, decimal_places=2)
     date = models.DateTimeField(auto_now_add=True, verbose_name=_("Date"))
 
+    class Meta:
+        ordering = ["-date"]
+        indexes = [
+            models.Index(fields=["account", "-date"], name="txn_account_date_idx"),
+        ]
+
     def __str__(self):
-        return str(self.transaction_id)
+        return self.transaction_id
 
 
-class TransactionLogs(models.Model):
-    sender = models.CharField(max_length=16, verbose_name=_("sender"), null=True, blank=True)
-    receiver = models.CharField(max_length=16, verbose_name=_("receiver"), null=True, blank=True)
-    amount = models.DecimalField(_('Amount'), max_digits=12, decimal_places=2)
-    cc_number = models.CharField(max_length=16, verbose_name=_("creditcard_number"), null=True, blank=True)
-    rec_cc_number = models.CharField(max_length=16, verbose_name=_("receiver_creditcard"), null=True, blank=True)
-    date = models.DateTimeField(verbose_name=_("Date"))
-    is_fraud = models.IntegerField(verbose_name=_("Fraud"), default=0)
+class TransactionLog(models.Model):
+    """Audit record for a money movement or a blocked transfer attempt."""
+
+    sender_account = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sent_transaction_logs",
+    )
+    receiver_account = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="received_transaction_logs",
+    )
+    amount = models.DecimalField(_("Amount"), max_digits=12, decimal_places=2)
+    date = models.DateTimeField(auto_now_add=True, verbose_name=_("Date"))
+    is_fraud = models.BooleanField(_("Fraud"), default=False)
+    fraud_probability = models.FloatField(null=True, blank=True)
+    fraud_model_version = models.CharField(max_length=50, null=True, blank=True)
+    fraud_threshold = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = _("Transaction Log")
+        verbose_name_plural = _("Transaction Logs")
+        ordering = ["-date"]
+        indexes = [
+            models.Index(fields=["sender_account", "-date"], name="txlog_sender_date_idx"),
+            models.Index(fields=["receiver_account", "-date"], name="txlog_receiver_date_idx"),
+            models.Index(fields=["is_fraud", "-date"], name="txlog_fraud_date_idx"),
+        ]
 
     def __str__(self):
         return str(self.pk)
-
-    class Meta:
-        verbose_name = _("Transaction Logs")
-        verbose_name_plural = _("Transaction Logs")
