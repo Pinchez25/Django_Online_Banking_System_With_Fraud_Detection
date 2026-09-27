@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     wireMockForms();
     wireMessages();
     wirePasswordToggles();
+    wireRealtimeNotifications();
 });
 
 // Fill every `<span class="icon" data-icon="name">` with its sprite symbol.
@@ -122,6 +123,101 @@ function wireMessages() {
     document.querySelectorAll('[data-message-close]').forEach((btn) => {
         btn.addEventListener('click', () => btn.closest('.message')?.classList.add('is-dismissed'));
     });
+}
+
+function wireRealtimeNotifications() {
+    const topbar = document.querySelector('[data-notification-socket]');
+    if (!topbar || !('WebSocket' in window)) return;
+
+    const socketPath = topbar.dataset.notificationSocket;
+    const socketUrl = `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}${socketPath}`;
+    let reconnectDelay = 1000;
+
+    const connect = () => {
+        const socket = new WebSocket(socketUrl);
+
+        socket.addEventListener('open', () => {
+            reconnectDelay = 1000;
+        });
+        socket.addEventListener('message', (event) => {
+            let payload;
+            try {
+                payload = JSON.parse(event.data);
+            } catch {
+                return;
+            }
+
+            if (payload.type === 'notifications.snapshot') {
+                Object.entries(payload.items || {}).forEach(([kind, items]) => {
+                    const list = document.querySelector(`[data-notification-list="${kind}"]`);
+                    if (!list) return;
+                    list.replaceChildren();
+                    items.forEach((notification) => list.append(createNotificationItem(notification)));
+                    if (!items.length) list.append(createEmptyNotificationItem(kind));
+                    updateNotificationCount(kind, payload.counts?.[kind] || 0);
+                });
+            } else if (payload.type === 'notifications.created' && payload.notification) {
+                const notification = payload.notification;
+                const list = document.querySelector(`[data-notification-list="${notification.kind}"]`);
+                if (list && !list.querySelector(`[data-notification-id="${CSS.escape(notification.id)}"]`)) {
+                    list.querySelector('.popover__empty')?.remove();
+                    list.prepend(createNotificationItem(notification));
+                    while (list.children.length > 5) list.lastElementChild.remove();
+                }
+                updateNotificationCount(notification.kind, payload.unread_count || 0);
+            }
+        });
+        socket.addEventListener('close', () => {
+            window.setTimeout(connect, reconnectDelay);
+            reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+        });
+        socket.addEventListener('error', () => socket.close());
+    };
+
+    connect();
+}
+
+function createNotificationItem(notification) {
+    const item = document.createElement('li');
+    const levels = ['info', 'success', 'warning', 'danger'];
+    item.className = `popover__item${notification.kind === 'alert' && levels.includes(notification.level) ? ` popover__item--${notification.level}` : ''}`;
+    item.dataset.notificationId = notification.id;
+
+    if (notification.kind === 'alert') {
+        const dot = document.createElement('span');
+        dot.className = 'popover__dot';
+        item.append(dot);
+    } else {
+        const avatar = document.createElement('span');
+        avatar.className = 'popover__avatar';
+        avatar.textContent = (notification.sender_name || 'K').slice(0, 1);
+        item.append(avatar);
+    }
+
+    const content = document.createElement('div');
+    const title = document.createElement('p');
+    title.className = 'popover__title';
+    title.textContent = notification.title;
+    const meta = document.createElement('p');
+    meta.className = 'popover__meta';
+    meta.textContent = `${notification.body} · Just now`;
+    content.append(title, meta);
+    item.append(content);
+    return item;
+}
+
+function createEmptyNotificationItem(kind) {
+    const item = document.createElement('li');
+    item.className = 'popover__empty';
+    item.textContent = kind === 'alert' ? "You're all caught up." : 'No new messages.';
+    return item;
+}
+
+function updateNotificationCount(kind, count) {
+    const badge = document.querySelector(`[data-notification-count="${kind}"]`);
+    if (!badge) return;
+    badge.textContent = String(count);
+    badge.hidden = count < 1;
 }
 
 // Toggles a password field between masked and plain text via its trailing button.

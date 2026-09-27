@@ -1,0 +1,44 @@
+
+/* ---------------------------------------------------------------
+   django.contrib.messages banners
+   --------------------------------------------------------------- */
+.messages {
+    list-style: none;
+    margin: 0 0 18px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.message {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    font-size: 13.5px;
+}
+
+.message__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-soft); margin-top: 5px; flex-shrink: 0; }
+.message__text { flex: 1; }
+.message__close {
+    border: none; background: none; cursor: pointer;
+    font-size: 16px; line-height: 1; color: var(--muted); padding: 0 2px;
+}
+.message__close:hover { color: var(--ink); }
+
+.message--success { background: var(--primary-soft); border-color: transparent; color: var(--primary-dark); }
+.message--success .message__dot { background: var(--primary); }
+
+.message--warning { background: var(--gold-soft); border-color: transparent; color: #8A6415; }
+.message--warning .message__dot { background: var(--gold); }
+
+.message--error { background: var(--brick-soft); border-color: transparent; color: var(--brick); }
+.message--error .message__dot { background: var(--brick); }
+
+.message--info { background: var(--primary-soft); border-color: transparent; color: var(--ink-soft); }
+
+.message.is-dismissed { display: none; }
